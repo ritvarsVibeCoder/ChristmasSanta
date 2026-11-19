@@ -8,14 +8,14 @@
   #text{position:absolute;left:0;right:0;top:0;bottom:0;
     font-family:'Cormorant Garamond',serif;color:#efe9df;text-align:center;}
   #text{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    top:820px;bottom:auto;height:1050px;}
-  .q{padding:0 70px;font-weight:700;font-size:57px;line-height:1.17;letter-spacing:.1px;color:#f6f1e8;
+    top:640px;bottom:auto;height:1620px;}
+  .q{padding:0 48px;font-weight:700;font-size:86px;line-height:1.17;letter-spacing:.1px;color:#f6f1e8;
     text-shadow:0 0 14px rgba(4,5,14,1),0 0 34px rgba(4,5,14,.95),0 0 70px rgba(4,5,14,.7),0 2px 2px rgba(0,0,0,.8);}
   .q em{font-style:italic;font-weight:700;color:#f6cf8e;
     text-shadow:0 0 16px rgba(255,190,110,.45),0 0 34px rgba(4,5,14,.95),0 2px 2px rgba(0,0,0,.8);}
-  .n{display:block;font-family:'Cormorant SC',serif;font-weight:600;font-size:32px;letter-spacing:14px;
+  .n{display:block;font-family:'Cormorant SC',serif;font-weight:600;font-size:46px;letter-spacing:18px;
     color:rgba(246,207,142,.85);margin-bottom:10px;text-shadow:0 0 14px rgba(4,5,14,1);}
-  .sep{position:relative;width:420px;height:1px;margin:42px 0;
+  .sep{position:relative;width:420px;height:1px;margin:40px 0;
     background:linear-gradient(90deg,transparent,rgba(246,207,142,.55),transparent);}
   .sep::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;
     transform:rotate(45deg);border:1px solid rgba(246,207,142,.8);background:#0b0a18;}
@@ -27,7 +27,7 @@
   <div class="sep"></div>
   <div class="q"><span class="n">ii</span>Why do I feel so <em>grounded</em> and <em>safe</em> in myself and my body?</div>
   <div class="sep"></div>
-  <div class="q"><span class="n">iii</span>Why am I always surrounded by <em>love?</em></div>
+  <div class="q"><span class="n">iii</span>Why am I always<br>surrounded by <em>love?</em></div>
   <div class="sep"></div>
   <div class="q"><span class="n">iv</span>Why does the Universe always have <em>my back?</em></div>
 </div>
@@ -117,12 +117,12 @@ for(let v=0;v<5;v++){
 c.restore();
 
 // 6b. light axis: the stream rises all the way up into the symbol
-const SX=W/2, SY=H*.165, SR=135;
+const SX=W/2, SY=H*.125, SR=118;
 c.save();c.globalCompositeOperation='screen';
-let ax=c.createLinearGradient(0,SY,0,H*.36);
+let ax=c.createLinearGradient(0,SY,0,H*.25);
 ax.addColorStop(0,'rgba(255,220,160,.55)');ax.addColorStop(1,'rgba(255,200,130,0)');
-c.fillStyle=ax;c.fillRect(SX-1.2,SY,2.4,H*.36-SY);
-c.filter='blur(10px)';c.fillRect(SX-6,SY,12,H*.36-SY);c.restore();
+c.fillStyle=ax;c.fillRect(SX-1.2,SY,2.4,H*.25-SY);
+c.filter='blur(10px)';c.fillRect(SX-6,SY,12,H*.25-SY);c.restore();
 
 // 6c. the symbol — Seed of Life with an eight-pointed star of strength at its heart
 function symbol(alpha,lw){
@@ -178,7 +178,7 @@ c.fillStyle=hp;c.fillRect(0,H*.9,W,H*.1);c.restore();
 c.save();
 const vg=c.createRadialGradient(W/2,H*.5,W*.3,W/2,H*.5,H*.62);
 vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');c.fillStyle=vg;c.fillRect(0,0,W,H);
-const tb=c.createLinearGradient(0,H*.29,0,H*.70);
+const tb=c.createLinearGradient(0,H*.22,0,H*.84);
 tb.addColorStop(0,'rgba(4,5,14,0)');tb.addColorStop(.15,'rgba(4,5,14,.34)');tb.addColorStop(.85,'rgba(4,5,14,.34)');tb.addColorStop(1,'rgba(4,5,14,0)');
 c.fillStyle=tb;c.fillRect(0,0,W,H);c.restore();
 
