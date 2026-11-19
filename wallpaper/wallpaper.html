@@ -1,33 +1,35 @@
 <!doctype html>
 <html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Cormorant+SC:wght@500&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,700&family=Cormorant+SC:wght@600&display=block" rel="stylesheet">
 <style>
   html,body{margin:0;background:#04050c;}
   #wrap{position:relative;width:1220px;height:2712px;overflow:hidden;}
   canvas{position:absolute;inset:0;}
   #text{position:absolute;left:0;right:0;top:0;bottom:0;
     font-family:'Cormorant Garamond',serif;color:#efe9df;text-align:center;}
-  .q{position:absolute;left:90px;right:90px;font-weight:500;font-size:70px;line-height:1.16;
-    letter-spacing:.2px;text-shadow:0 0 24px rgba(4,5,14,.95),0 0 60px rgba(4,5,14,.8),0 2px 3px rgba(0,0,0,.6);}
-  .q em{font-style:italic;font-weight:600;color:#f1c98a;
-    text-shadow:0 0 18px rgba(255,190,110,.35),0 0 40px rgba(4,5,14,.9),0 2px 3px rgba(0,0,0,.6);}
-  .n{display:block;font-family:'Cormorant SC',serif;font-size:38px;letter-spacing:14px;
-    color:rgba(241,201,138,.75);margin-bottom:22px;text-shadow:none;}
-  .sep{position:absolute;left:50%;width:520px;margin-left:-260px;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(241,201,138,.45),transparent);}
+  #text{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    top:820px;bottom:auto;height:1050px;}
+  .q{padding:0 70px;font-weight:700;font-size:57px;line-height:1.17;letter-spacing:.1px;color:#f6f1e8;
+    text-shadow:0 0 14px rgba(4,5,14,1),0 0 34px rgba(4,5,14,.95),0 0 70px rgba(4,5,14,.7),0 2px 2px rgba(0,0,0,.8);}
+  .q em{font-style:italic;font-weight:700;color:#f6cf8e;
+    text-shadow:0 0 16px rgba(255,190,110,.45),0 0 34px rgba(4,5,14,.95),0 2px 2px rgba(0,0,0,.8);}
+  .n{display:block;font-family:'Cormorant SC',serif;font-weight:600;font-size:32px;letter-spacing:14px;
+    color:rgba(246,207,142,.85);margin-bottom:10px;text-shadow:0 0 14px rgba(4,5,14,1);}
+  .sep{position:relative;width:420px;height:1px;margin:42px 0;
+    background:linear-gradient(90deg,transparent,rgba(246,207,142,.55),transparent);}
   .sep::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;
-    transform:rotate(45deg);border:1px solid rgba(241,201,138,.7);background:#0b0a18;}
+    transform:rotate(45deg);border:1px solid rgba(246,207,142,.8);background:#0b0a18;}
 </style></head>
 <body><div id="wrap">
 <canvas id="c" width="1220" height="2712"></canvas>
 <div id="text">
-  <div class="q" style="top:830px"><span class="n">i</span>Why is it so easy for me to <em>let go</em>, breathe deeply from my belly, and feel <em>completely at ease?</em></div>
-  <div class="sep" style="top:1250px"></div>
-  <div class="q" style="top:1320px"><span class="n">ii</span>Why do I feel so <em>grounded</em> and <em>safe</em> in myself and my body?</div
-  ><div class="sep" style="top:1640px"></div>
-  <div class="q" style="top:1710px"><span class="n">iii</span>Why am I always surrounded by <em>love?</em></div>
-  <div class="sep" style="top:1930px"></div>
-  <div class="q" style="top:2000px"><span class="n">iv</span>Why does the Universe always have <em>my back?</em></div>
+  <div class="q"><span class="n">i</span>Why is it so easy for me to <em>let go</em>, breathe deeply from my belly, and feel <em style="white-space:nowrap">completely at ease?</em></div>
+  <div class="sep"></div>
+  <div class="q"><span class="n">ii</span>Why do I feel so <em>grounded</em> and <em>safe</em> in myself and my body?</div>
+  <div class="sep"></div>
+  <div class="q"><span class="n">iii</span>Why am I always surrounded by <em>love?</em></div>
+  <div class="sep"></div>
+  <div class="q"><span class="n">iv</span>Why does the Universe always have <em>my back?</em></div>
 </div>
 <canvas id="g" width="1220" height="2712" style="mix-blend-mode:overlay;opacity:.55"></canvas>
 </div>
@@ -101,13 +103,69 @@ for(let i=0;i<900;i++){
 }
 c.restore();
 
-// 6. quiet geometry framing the clock — Seed of Life in hairline
-c.save();c.translate(W/2,H*.155);c.globalCompositeOperation='screen';
-c.strokeStyle='rgba(241,201,138,.17)';c.lineWidth=1.3;
-const rr=150;c.beginPath();c.arc(0,0,rr,0,7);c.stroke();
-for(let i=0;i<6;i++){c.beginPath();c.arc(Math.cos(i*Math.PI/3)*rr,Math.sin(i*Math.PI/3)*rr,rr,0,7);c.stroke();}
-c.strokeStyle='rgba(241,201,138,.08)';c.beginPath();c.arc(0,0,rr*2,0,7);c.stroke();
-c.beginPath();c.arc(0,0,rr*2+18,0,7);c.stroke();
+// 6a. aurora veils high in the sky
+c.save();c.globalCompositeOperation='screen';c.filter='blur(38px)';
+for(let v=0;v<5;v++){
+  const cx=W*(.12+v*.19)+(R()-.5)*80, top=H*(.02+R()*.05), len=H*(.22+R()*.12);
+  const col=v%2?'90,200,190':'150,120,255';
+  for(let i=0;i<26;i++){
+    const x=cx+Math.sin(i*.45+v)*60+i*6, lg=c.createLinearGradient(0,top,0,top+len);
+    lg.addColorStop(0,'rgba(0,0,0,0)');lg.addColorStop(.35,`rgba(${col},.05)`);lg.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=lg;c.fillRect(x,top,10,len);
+  }
+}
+c.restore();
+
+// 6b. light axis: the stream rises all the way up into the symbol
+const SX=W/2, SY=H*.165, SR=135;
+c.save();c.globalCompositeOperation='screen';
+let ax=c.createLinearGradient(0,SY,0,H*.36);
+ax.addColorStop(0,'rgba(255,220,160,.55)');ax.addColorStop(1,'rgba(255,200,130,0)');
+c.fillStyle=ax;c.fillRect(SX-1.2,SY,2.4,H*.36-SY);
+c.filter='blur(10px)';c.fillRect(SX-6,SY,12,H*.36-SY);c.restore();
+
+// 6c. the symbol — Seed of Life with an eight-pointed star of strength at its heart
+function symbol(alpha,lw){
+  c.save();c.translate(SX,SY);c.strokeStyle=`rgba(250,214,150,${alpha})`;c.lineWidth=lw;
+  const r=SR/2;
+  c.beginPath();c.arc(0,0,r,0,7);c.stroke();
+  for(let i=0;i<6;i++){const a=i*Math.PI/3-Math.PI/2;c.beginPath();c.arc(Math.cos(a)*r,Math.sin(a)*r,r,0,7);c.stroke();}
+  c.beginPath();c.arc(0,0,SR,0,7);c.stroke();
+  c.lineWidth=lw*.7;c.beginPath();c.arc(0,0,SR*1.32,0,7);c.stroke();
+  c.beginPath();c.arc(0,0,SR*1.40,0,7);c.stroke();
+  // eight-pointed star (two squares)
+  c.lineWidth=lw*1.2;
+  for(const rot of [0,Math.PI/4]){c.beginPath();
+    for(let k=0;k<4;k++){const a=rot+k*Math.PI/2;const x=Math.cos(a)*SR*.5,y=Math.sin(a)*SR*.5;k?c.lineTo(x,y):c.moveTo(x,y);}
+    c.closePath();c.stroke();}
+  // twelve points of light on the outer ring
+  for(let k=0;k<12;k++){const a=k*Math.PI/6;c.fillStyle=`rgba(255,226,170,${alpha*1.3})`;
+    c.beginPath();c.arc(Math.cos(a)*SR*1.36,Math.sin(a)*SR*1.36,k%3?2.2:3.8,0,7);c.fill();}
+  c.restore();
+}
+c.save();c.globalCompositeOperation='screen';
+let halo=c.createRadialGradient(SX,SY,0,SX,SY,SR*2.6);
+halo.addColorStop(0,'rgba(255,205,140,.30)');halo.addColorStop(.25,'rgba(230,150,120,.12)');
+halo.addColorStop(.6,'rgba(120,90,200,.06)');halo.addColorStop(1,'rgba(0,0,0,0)');
+c.fillStyle=halo;c.fillRect(0,0,W,H*.45);
+c.filter='blur(9px)';symbol(.55,4);c.filter='blur(2px)';symbol(.5,1.6);c.filter='none';symbol(.85,1.1);
+// heart: a bright core with a soft cross flare
+let core=c.createRadialGradient(SX,SY,0,SX,SY,46);
+core.addColorStop(0,'rgba(255,248,230,1)');core.addColorStop(.2,'rgba(255,215,150,.6)');core.addColorStop(1,'rgba(0,0,0,0)');
+c.fillStyle=core;c.beginPath();c.arc(SX,SY,46,0,7);c.fill();
+for(const [w,h] of [[260,2],[2,260]]){let f=c.createRadialGradient(SX,SY,0,SX,SY,Math.max(w,h)/2);
+  f.addColorStop(0,'rgba(255,235,200,.7)');f.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=f;c.fillRect(SX-w/2,SY-h/2,w,h);}
+c.restore();
+
+// 6d. a few stars that sparkle
+c.save();c.globalCompositeOperation='screen';
+for(let i=0;i<22;i++){
+  const x=R()*W, y=R()*H*.8; if(Math.abs(x-SX)<260&&Math.abs(y-SY)<260)continue;
+  const L=14+R()*30, a=.35+R()*.4;
+  for(const [w,h] of [[L*2,1.2],[1.2,L*2]]){let f=c.createRadialGradient(x,y,0,x,y,L);
+    f.addColorStop(0,`rgba(255,240,220,${a})`);f.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=f;c.fillRect(x-w/2,y-h/2,w,h);}
+  c.fillStyle=`rgba(255,250,240,${a+.2})`;c.beginPath();c.arc(x,y,1.6,0,7);c.fill();
+}
 c.restore();
 
 // 7. home point — small warm light where the stream begins
@@ -120,8 +178,8 @@ c.fillStyle=hp;c.fillRect(0,H*.9,W,H*.1);c.restore();
 c.save();
 const vg=c.createRadialGradient(W/2,H*.5,W*.3,W/2,H*.5,H*.62);
 vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');c.fillStyle=vg;c.fillRect(0,0,W,H);
-const tb=c.createLinearGradient(0,H*.28,0,H*.80);
-tb.addColorStop(0,'rgba(4,5,14,0)');tb.addColorStop(.15,'rgba(4,5,14,.28)');tb.addColorStop(.85,'rgba(4,5,14,.28)');tb.addColorStop(1,'rgba(4,5,14,0)');
+const tb=c.createLinearGradient(0,H*.29,0,H*.70);
+tb.addColorStop(0,'rgba(4,5,14,0)');tb.addColorStop(.15,'rgba(4,5,14,.34)');tb.addColorStop(.85,'rgba(4,5,14,.34)');tb.addColorStop(1,'rgba(4,5,14,0)');
 c.fillStyle=tb;c.fillRect(0,0,W,H);c.restore();
 
 // 9. film grain
