@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Cormorant+SC:wght@500&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#04050c;}
+  #wrap{position:relative;width:1220px;height:2712px;overflow:hidden;}
+  canvas{position:absolute;inset:0;}
+  #text{position:absolute;left:0;right:0;top:0;bottom:0;
+    font-family:'Cormorant Garamond',serif;color:#efe9df;text-align:center;}
+  .q{position:absolute;left:90px;right:90px;font-weight:500;font-size:70px;line-height:1.16;
+    letter-spacing:.2px;text-shadow:0 0 24px rgba(4,5,14,.95),0 0 60px rgba(4,5,14,.8),0 2px 3px rgba(0,0,0,.6);}
+  .q em{font-style:italic;font-weight:600;color:#f1c98a;
+    text-shadow:0 0 18px rgba(255,190,110,.35),0 0 40px rgba(4,5,14,.9),0 2px 3px rgba(0,0,0,.6);}
+  .n{display:block;font-family:'Cormorant SC',serif;font-size:38px;letter-spacing:14px;
+    color:rgba(241,201,138,.75);margin-bottom:22px;text-shadow:none;}
+  .sep{position:absolute;left:50%;width:520px;margin-left:-260px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(241,201,138,.45),transparent);}
+  .sep::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;
+    transform:rotate(45deg);border:1px solid rgba(241,201,138,.7);background:#0b0a18;}
+</style></head>
+<body><div id="wrap">
+<canvas id="c" width="1220" height="2712"></canvas>
+<div id="text">
+  <div class="q" style="top:830px"><span class="n">i</span>Why is it so easy for me to <em>let go</em>, breathe deeply from my belly, and feel <em>completely at ease?</em></div>
+  <div class="sep" style="top:1250px"></div>
+  <div class="q" style="top:1320px"><span class="n">ii</span>Why do I feel so <em>grounded</em> and <em>safe</em> in myself and my body?</div
+  ><div class="sep" style="top:1640px"></div>
+  <div class="q" style="top:1710px"><span class="n">iii</span>Why am I always surrounded by <em>love?</em></div>
+  <div class="sep" style="top:1930px"></div>
+  <div class="q" style="top:2000px"><span class="n">iv</span>Why does the Universe always have <em>my back?</em></div>
+</div>
+<canvas id="g" width="1220" height="2712" style="mix-blend-mode:overlay;opacity:.55"></canvas>
+</div>
+<script>
+const W=1220,H=2712;
+let s=20261119;const R=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+const c=document.getElementById('c').getContext('2d');
+
+// 1. sky: deep night above, warm "home" light below
+let g=c.createLinearGradient(0,0,0,H);
+g.addColorStop(0,'#03040b');g.addColorStop(.30,'#0a0c22');g.addColorStop(.55,'#141235');
+g.addColorStop(.75,'#2a173c');g.addColorStop(.88,'#4f2638');g.addColorStop(.96,'#7a3d2c');g.addColorStop(1,'#8c4a2a');
+c.fillStyle=g;c.fillRect(0,0,W,H);
+
+// 2. soft nebula — many blurred blobs, muted palette
+c.save();c.filter='blur(60px)';c.globalCompositeOperation='screen';
+const neb=[[80,60,140],[40,70,130],[120,60,120],[30,90,110],[150,80,90]];
+for(let i=0;i<70;i++){
+  const y=R()*H*.95, side=R()<.5? R()*W*.45 : W-R()*W*.45;
+  const r=120+R()*320, col=neb[(R()*neb.length)|0], a=.07+R()*.11*(1-y/H*.4);
+  const rg=c.createRadialGradient(side,y,0,side,y,r);
+  rg.addColorStop(0,`rgba(${col},${a})`);rg.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=rg;c.beginPath();c.ellipse(side,y,r,r*(.5+R()*.6),R()*3,0,7);c.fill();
+}
+c.restore();
+
+// 3. warm horizon bloom — the "home" light
+c.save();c.globalCompositeOperation='screen';
+let hb=c.createRadialGradient(W/2,H*.985,0,W/2,H*.985,W*1.1);
+hb.addColorStop(0,'rgba(255,200,130,.55)');hb.addColorStop(.18,'rgba(240,150,90,.28)');
+hb.addColorStop(.5,'rgba(150,70,90,.12)');hb.addColorStop(1,'rgba(0,0,0,0)');
+c.fillStyle=hb;c.fillRect(0,0,W,H);c.restore();
+
+// 4. stars — power-law sizes, colour temperature, denser at top
+c.save();c.globalCompositeOperation='screen';
+for(let i=0;i<2600;i++){
+  const y=Math.pow(R(),1.5)*H*.92, x=R()*W, m=Math.pow(R(),6);
+  const r=.35+m*2.2, a=(.25+R()*.6)*(1-y/H*.7);
+  const t=R(); const col=t<.15?'255,214,170':t<.35?'190,210,255':'255,250,240';
+  c.fillStyle=`rgba(${col},${a})`;c.beginPath();c.arc(x,y,r,0,7);c.fill();
+  if(m>.35){const sg=c.createRadialGradient(x,y,0,x,y,r*9);
+    sg.addColorStop(0,`rgba(${col},${a*.35})`);sg.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=sg;c.beginPath();c.arc(x,y,r*9,0,7);c.fill();}
+}
+c.restore();
+
+// 5. the flow — a meandering stream of light rising from the home glow
+function flowX(t,k){ // t:0 bottom ->1 top
+  return W/2 + Math.sin(t*6.3+0.9+k*.015)*W*.23*(.3+t*.8) + Math.sin(t*13+k*.3)*14*(1-t);
+}
+c.save();c.globalCompositeOperation='screen';
+for(let k=0;k<160;k++){
+  const off=(R()-.5)*(40+R()*110), warm=R();
+  c.beginPath();
+  for(let i=0;i<=400;i++){
+    const t=i/400, y=H*(.985-t*.86), w=off*(1-t*.6);
+    const x=flowX(t,k)+w+Math.sin(t*20+k)*4;
+    i?c.lineTo(x,y):c.moveTo(x,y);
+  }
+  const lg=c.createLinearGradient(0,H,0,H*.12);
+  const col=warm<.6?'255,196,128':'200,170,255';
+  lg.addColorStop(0,`rgba(${col},.16)`);lg.addColorStop(.35,`rgba(${col},.085)`);
+  lg.addColorStop(.75,`rgba(${col},.045)`);lg.addColorStop(1,'rgba(0,0,0,0)');
+  c.strokeStyle=lg;c.lineWidth=.6+R()*1.6;c.stroke();
+}
+// drifting motes along the stream
+for(let i=0;i<900;i++){
+  const t=Math.pow(R(),1.3), y=H*(.985-t*.86), x=flowX(t,0)+(R()-.5)*(140+t*260);
+  const a=(.15+R()*.55)*(1-t*.85), r=.5+Math.pow(R(),4)*2.6;
+  c.fillStyle=`rgba(255,${200+R()*40|0},${140+R()*60|0},${a})`;c.beginPath();c.arc(x,y,r,0,7);c.fill();
+}
+c.restore();
+
+// 6. quiet geometry framing the clock — Seed of Life in hairline
+c.save();c.translate(W/2,H*.155);c.globalCompositeOperation='screen';
+c.strokeStyle='rgba(241,201,138,.17)';c.lineWidth=1.3;
+const rr=150;c.beginPath();c.arc(0,0,rr,0,7);c.stroke();
+for(let i=0;i<6;i++){c.beginPath();c.arc(Math.cos(i*Math.PI/3)*rr,Math.sin(i*Math.PI/3)*rr,rr,0,7);c.stroke();}
+c.strokeStyle='rgba(241,201,138,.08)';c.beginPath();c.arc(0,0,rr*2,0,7);c.stroke();
+c.beginPath();c.arc(0,0,rr*2+18,0,7);c.stroke();
+c.restore();
+
+// 7. home point — small warm light where the stream begins
+c.save();c.globalCompositeOperation='screen';
+const hp=c.createRadialGradient(W/2,H*.955,0,W/2,H*.955,90);
+hp.addColorStop(0,'rgba(255,236,200,.9)');hp.addColorStop(.12,'rgba(255,200,130,.45)');hp.addColorStop(1,'rgba(0,0,0,0)');
+c.fillStyle=hp;c.fillRect(0,H*.9,W,H*.1);c.restore();
+
+// 8. vignette + gentle darkening behind text column
+c.save();
+const vg=c.createRadialGradient(W/2,H*.5,W*.3,W/2,H*.5,H*.62);
+vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');c.fillStyle=vg;c.fillRect(0,0,W,H);
+const tb=c.createLinearGradient(0,H*.28,0,H*.80);
+tb.addColorStop(0,'rgba(4,5,14,0)');tb.addColorStop(.15,'rgba(4,5,14,.28)');tb.addColorStop(.85,'rgba(4,5,14,.28)');tb.addColorStop(1,'rgba(4,5,14,0)');
+c.fillStyle=tb;c.fillRect(0,0,W,H);c.restore();
+
+// 9. film grain
+const gc=document.getElementById('g').getContext('2d'),img=gc.createImageData(W,H),d=img.data;
+for(let i=0;i<d.length;i+=4){const v=128+(R()-.5)*70;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}
+gc.putImageData(img,0,0);
+</script></body></html>
