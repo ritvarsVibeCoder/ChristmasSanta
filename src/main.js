@@ -2,6 +2,7 @@ import './style.css';
 import { api } from './api.js';
 import { icons, snowflake, garland } from './icons.js';
 import { createScratchCard } from './scratch.js';
+import { adventParticipantPage, adventOrganizerPage } from './advent.js';
 
 const app = document.getElementById('app');
 const STORAGE_KEY = 'secret-santa.events';
@@ -116,11 +117,38 @@ function route() {
   }
   window.scrollTo(0, 0);
   const hash = location.hash.replace(/^#/, '');
-  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})$/);
+  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent)?$/);
+  if (m && m[3] && m[1] === 'o') return adventOrganizerPage(m[2], adventUi());
+  if (m && m[3] && m[1] === 's') return adventParticipantPage(m[2], adventUi());
   if (m && m[1] === 'o') return organizerPage(m[2]);
   if (m && m[1] === 's') return participantPage(m[2]);
   return homePage();
 }
+
+// Shared helpers handed to the Advent calendar pages (src/advent.js).
+function adventUi() {
+  return {
+    app,
+    esc,
+    toast,
+    flakes,
+    loading,
+    errorPage,
+    burstConfetti,
+    setCleanup: (fn) => {
+      cleanup = fn;
+    },
+  };
+}
+
+const CAL_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`;
+
+const adventEntry = (token) => `
+  <a class="advent-entry" href="#/s/${esc(token)}/advent">
+    <span class="ae-ico">${CAL_ICON}</span>
+    <span class="ae-text"><strong>Adventes kalendārs</strong><span class="ae-sub">Ģimenes atmiņu spēle — atver durvis katru dienu</span></span>
+    <span class="ae-go" aria-hidden="true">›</span>
+  </a>`;
 
 window.addEventListener('hashchange', route);
 
@@ -388,6 +416,12 @@ async function organizerPage(adminToken) {
                 <button type="button" class="btn btn-outline" data-copy-org>${icons.copy()}Copy organizer link</button>
               </div>
 
+              <div class="panel org-link org-advent">
+                <div class="org-link-head">${CAL_ICON}<strong>Adventes kalendārs</strong></div>
+                <p>Ģimenes atmiņu spēle decembrī: apstipriniet atmiņas un ielieciet tās kalendāra dienās.</p>
+                <a class="btn btn-gold" href="#/o/${esc(adminToken)}/advent">Atvērt kalendāra pārvaldību</a>
+              </div>
+
               <div class="panel note-panel">
                 ${icons.shield()}
                 <p>You only see who has opened their link — never who drew whom. Nobody draws themselves.</p>
@@ -522,7 +556,7 @@ async function participantPage(token) {
     return errorPage('Link not found', 'This Secret Santa link doesn’t work. Ask the organizer to send it again.');
   }
 
-  if (card.revealed && card.receiver_name) return renderRevealed(card, false);
+  if (card.revealed && card.receiver_name) return renderRevealed(card, false, token);
   renderScratch(token, card);
 }
 
@@ -566,6 +600,7 @@ function renderScratch(token, card) {
             <button type="button" class="link-btn" id="revealbtn">tap to reveal</button>
           </p>
           <div class="form-error" id="carderr" role="alert" hidden></div>
+          ${adventEntry(token)}
         </div>
 
         <div class="mobile-only">${infoTiles(card)}</div>
@@ -602,7 +637,7 @@ function renderScratch(token, card) {
       try {
         const name = await fetchMatch();
         setTimeout(() => {
-          if (!gone) renderRevealed({ ...card, receiver_name: name }, true);
+          if (!gone) renderRevealed({ ...card, receiver_name: name }, true, token);
         }, 900);
       } catch {
         /* error already shown */
@@ -616,7 +651,7 @@ function renderScratch(token, card) {
   };
 }
 
-function renderRevealed(card, celebrate) {
+function renderRevealed(card, celebrate, token) {
   window.getSelection?.().removeAllRanges();
   app.innerHTML = `
     <div class="page page-card page-revealed">
@@ -641,6 +676,7 @@ function renderRevealed(card, celebrate) {
               <span class="pill">${icons.gift(16)}Gift budget ${budget(card.budget_min, card.budget_max)}</span>
             </div>
           </div>
+          ${adventEntry(token)}
         </div>
 
         <div class="tips">
