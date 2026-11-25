@@ -333,3 +333,10 @@ body.no-scroll { overflow: hidden; }
 .adv-lock-note svg { flex: none; margin-top: 3px; }
 
 @media (max-width: 420px) { .page-advent .role { display: none; } }
+
+/* "share memories" call-to-action after the Secret Santa reveal */
+.advent-entry.memories { background: var(--red); border-color: var(--gold-light); }
+.advent-entry.memories:hover { background: #d83246; }
+.advent-entry.memories .ae-ico { background: var(--gold); color: var(--ink); }
+.advent-entry.memories .ae-sub { color: #fde3e3; }
+.advent-entry + .advent-entry { margin-top: 10px; }

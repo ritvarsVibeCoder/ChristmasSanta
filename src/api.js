@@ -12,7 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 async function rpc(fn, args) {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) {
-    const err = new Error(error.message || 'Something went wrong. Please try again.');
+    const err = new Error(error.message || 'Kaut kas nogāja greizi. Lūdzu, mēģini vēlreiz.');
     err.code = error.code;
     throw err;
   }

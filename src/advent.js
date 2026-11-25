@@ -104,7 +104,7 @@ function nextMilestone(score, cfg) {
 // Participant
 // ======================================================================
 
-export async function adventParticipantPage(token, ui) {
+export async function adventParticipantPage(token, ui, initialTab = 'calendar') {
   const { app, esc, toast, flakes, loading, errorPage, setCleanup, burstConfetti } = ui;
   loading('Atveram adventes kalendāru…');
 
@@ -115,7 +115,7 @@ export async function adventParticipantPage(token, ui) {
     return errorPage('Saite nav atrasta', 'Šī saite nedarbojas. Palūdz organizatoram to atsūtīt vēlreiz.');
   }
 
-  const view = { tab: 'calendar', memories: null, openQuestion: null, editingId: null, finale: null, sheetDay: null };
+  const view = { tab: initialTab, memories: null, openQuestion: null, editingId: null, finale: null, sheetDay: null };
   let alive = true;
   let pendingRender = false;
 
@@ -242,7 +242,7 @@ export async function adventParticipantPage(token, ui) {
     return `
       <section class="adv-panel">
         <h2>Padalies ar atmiņām</h2>
-        <p>Tavas atmiņas kļūs par mīklām kalendārā — citi minēs, kurš tās uzrakstīja. Raksti pirmajā personā, bet <strong>neatklāj savu vārdu</strong>.</p>
+        <p>Uzraksti siltu vai smieklīgu atmiņu — par sevi vai par kādu no ģimenes. Tās kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstīja. Tikai <strong>neatklāj savu vārdu</strong>!</p>
         <p class="muted">Atbildi tikai uz tiem jautājumiem, kas patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Tavas atmiņas redz tikai organizators, līdz tās parādās kalendārā.</p>
       </section>
 
@@ -326,7 +326,7 @@ export async function adventParticipantPage(token, ui) {
         ${flakes()}
         <div class="wrap adv-wrap">
           <header class="topbar">
-            <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz Slepeno Salaveci">${icons.back()}</a>
+            <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz slepeno rūķīti">${icons.back()}</a>
             <span class="brand">${icons.star(28)}<span>Adventes kalendārs</span></span>
           </header>
           <section class="hero adv-hero">
@@ -637,6 +637,10 @@ export async function adventParticipantPage(token, ui) {
   });
 
   render();
+  if (view.tab === 'memories') {
+    view.memories = await api.adventMyMemories(token).catch(() => []);
+    if (alive) render();
+  }
 }
 
 // ======================================================================
@@ -841,7 +845,7 @@ export async function adventOrganizerPage(adminToken, ui) {
         <ul class="adv-people">
           ${st.participants.map((p) => `<li><span>${esc(p.name)}</span><b>${p.memory_count}</b></li>`).join('')}
         </ul>
-        <p class="muted small">Dalībnieki kalendāru atver no savas Slepenā Salaveča saites — jaunas saites nav vajadzīgas.</p>
+        <p class="muted small">Dalībnieki kalendāru atver no savas slepenā rūķīša saites — jaunas saites nav vajadzīgas.</p>
       </section>`;
   }
 

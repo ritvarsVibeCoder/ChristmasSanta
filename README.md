@@ -11,7 +11,7 @@ A festive Secret Santa web app for families who live in different countries.
 - Nobody can draw themselves (names are drawn as one random cycle on the server).
 - *Redraw names* keeps the same links but gives everyone a new person.
 
-Mobile-first, with desktop layouts.
+Mobile-first, with desktop layouts. All screens are in Latvian ("Slepenais rūķītis").
 
 ## Adventes kalendārs (Advent calendar)
 

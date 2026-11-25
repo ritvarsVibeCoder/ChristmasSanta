@@ -42,7 +42,7 @@ export function createScratchCard(canvas, { onFirstScratch, onDone, threshold = 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if ('letterSpacing' in ctx) ctx.letterSpacing = `${2 * dpr}px`;
-    ctx.fillText('SCRATCH HERE', w / 2, h - 30 * dpr);
+    ctx.fillText('NOKAS ŠEIT', w / 2, h - 30 * dpr);
   }
 
   function star(c, cx, cy, r) {

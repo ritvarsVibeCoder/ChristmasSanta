@@ -13,6 +13,7 @@ const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const budget = (min, max) => (min === max ? `€${min}` : `€${min}–€${max}`);
+const cilveki = (n) => `${n} ${n === 0 ? 'cilvēku' : n % 10 === 1 && n % 100 !== 11 ? 'cilvēks' : 'cilvēki'}`;
 
 const baseUrl = () => `${location.origin}${location.pathname}`;
 const participantUrl = (token) => `${baseUrl()}#/s/${token}`;
@@ -76,8 +77,8 @@ function toast(msg) {
 
 const header = (role, backHref) => `
   <header class="topbar">
-    ${backHref ? `<a class="icon-btn back" href="${backHref}" aria-label="Back">${icons.back()}</a>` : ''}
-    <a class="brand" href="#/">${icons.star(28)}<span>Secret Santa</span></a>
+    ${backHref ? `<a class="icon-btn back" href="${backHref}" aria-label="Atpakaļ">${icons.back()}</a>` : ''}
+    <a class="brand" href="#/">${icons.star(28)}<span>Slepenais rūķītis</span></a>
     ${role ? `<span class="role">${role}</span>` : ''}
   </header>`;
 
@@ -87,7 +88,7 @@ const flakes = () => `
     ${snowflake(20, 0.4, 'f4')}${snowflake(14, 0.35, 'f5')}${snowflake(18, 0.3, 'f6')}
   </div>`;
 
-function loading(text = 'Loading…') {
+function loading(text = 'Ielādējam…') {
   app.innerHTML = `<div class="page center">${flakes()}<div class="loading"><span class="spinner" aria-hidden="true"></span>${esc(text)}</div></div>`;
 }
 
@@ -101,7 +102,7 @@ function errorPage(title, message) {
           <h1>${esc(title)}</h1>
           <p class="lede">${esc(message)}</p>
         </section>
-        <a class="btn btn-gold" href="#/">Start a new draw</a>
+        <a class="btn btn-gold" href="#/">Sākt jaunu izlozi</a>
       </div>
     </div>`;
 }
@@ -117,9 +118,9 @@ function route() {
   }
   window.scrollTo(0, 0);
   const hash = location.hash.replace(/^#/, '');
-  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent)?$/);
+  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent(\/atminas)?)?$/);
   if (m && m[3] && m[1] === 'o') return adventOrganizerPage(m[2], adventUi());
-  if (m && m[3] && m[1] === 's') return adventParticipantPage(m[2], adventUi());
+  if (m && m[3] && m[1] === 's') return adventParticipantPage(m[2], adventUi(), m[4] ? 'memories' : 'calendar');
   if (m && m[1] === 'o') return organizerPage(m[2]);
   if (m && m[1] === 's') return participantPage(m[2]);
   return homePage();
@@ -150,13 +151,24 @@ const adventEntry = (token) => `
     <span class="ae-go" aria-hidden="true">›</span>
   </a>`;
 
+const PEN_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+
+// Shown after the reveal: invite people to share memories for the Advent calendar.
+const memoriesEntry = (token) => `
+  <a class="advent-entry memories" href="#/s/${esc(token)}/advent/atminas">
+    <span class="ae-ico">${PEN_ICON}</span>
+    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Silta vai smieklīga atmiņa par kādu no ģimenes — decembrī tā kļūs par mīklu adventes kalendārā</span></span>
+    <span class="ae-go" aria-hidden="true">›</span>
+  </a>
+  ${adventEntry(token)}`;
+
 window.addEventListener('hashchange', route);
 
 // ---------- home: create the draw ----------
 
 function homePage() {
   const state = {
-    name: `Family Secret Santa ${new Date().getFullYear()}`,
+    name: `Ģimenes slepenais rūķītis ${new Date().getFullYear()}`,
     min: 20,
     max: 30,
     people: [],
@@ -171,19 +183,19 @@ function homePage() {
       ${flakes()}
       <div class="wrap home-grid">
         <div class="home-intro">
-          ${header('Organizer')}
+          ${header('Organizators')}
           <section class="hero">
-            <h1>Set up your <em>family draw</em></h1>
-            <p class="lede">Add everyone taking part. Each person gets a private magic link to scratch and find out who they’re gifting.</p>
+            <h1>Sarīko <em>ģimenes izlozi</em></h1>
+            <p class="lede">Pievieno visus dalībniekus. Katrs saņems savu slepeno saiti, kur nokasīt biļeti un uzzināt, kam gādās dāvanu.</p>
           </section>
           <div class="note desktop-only">
             ${icons.shield()}
-            <p>Nobody draws themselves, and the names stay hidden — even from you.</p>
+            <p>Neviens neizvelk pats sevi, un vārdi paliek noslēpumā — pat no tevis.</p>
           </div>
           ${
             saved.length
               ? `<div class="saved desktop-only-block">
-                  <h2>Your draws on this device</h2>
+                  <h2>Tavas izlozes šajā ierīcē</h2>
                   ${saved.map((e) => `<a class="saved-item" href="#/o/${esc(e.admin_token)}">${icons.gift(18)}<span>${esc(e.name)}</span></a>`).join('')}
                 </div>`
               : ''
@@ -192,16 +204,16 @@ function homePage() {
 
         <form class="card form" novalidate>
           <div class="field">
-            <label for="evname">Event name</label>
+            <label for="evname">Pasākuma nosaukums</label>
             <input id="evname" name="evname" maxlength="80" autocomplete="off" value="${esc(state.name)}">
           </div>
 
           <div class="field">
-            <span class="label" id="budget-label">Gift budget</span>
+            <span class="label" id="budget-label">Dāvanas budžets</span>
             <div class="budget-row" role="group" aria-labelledby="budget-label">
-              <label class="money">€ <input id="bmin" inputmode="numeric" aria-label="Minimum budget in euros" value="${state.min}"></label>
-              <span class="to">to</span>
-              <label class="money">€ <input id="bmax" inputmode="numeric" aria-label="Maximum budget in euros" value="${state.max}"></label>
+              <label class="money">€ <input id="bmin" inputmode="numeric" aria-label="Minimālais budžets eiro" value="${state.min}"></label>
+              <span class="to">līdz</span>
+              <label class="money">€ <input id="bmax" inputmode="numeric" aria-label="Maksimālais budžets eiro" value="${state.max}"></label>
             </div>
           </div>
 
@@ -209,33 +221,33 @@ function homePage() {
 
           <div class="field">
             <div class="field-head">
-              <span class="label">Participants</span>
+              <span class="label">Dalībnieki</span>
               <span class="count" id="count"></span>
             </div>
             <div class="chips" id="chips"></div>
             <div class="add-row">
-              <label for="addname" class="sr-only">Add a name</label>
-              <input id="addname" maxlength="40" placeholder="Add a name…" autocomplete="off" enterkeyhint="done">
-              <button type="button" class="btn-add" id="addbtn">${icons.plus()}Add</button>
+              <label for="addname" class="sr-only">Pievienot vārdu</label>
+              <input id="addname" maxlength="40" placeholder="Ieraksti vārdu…" autocomplete="off" enterkeyhint="done">
+              <button type="button" class="btn-add" id="addbtn">${icons.plus()}Pievienot</button>
             </div>
           </div>
 
           <div class="form-error" id="formerr" role="alert" hidden></div>
 
           <button type="submit" class="btn btn-red btn-big" id="submit">
-            ${icons.gift(20)}<span>Draw names &amp; create links</span>
+            ${icons.gift(20)}<span>Izlozēt un izveidot saites</span>
           </button>
         </form>
 
         <div class="note mobile-only">
           ${icons.shield()}
-          <p>Nobody draws themselves, and the names stay hidden — even from you.</p>
+          <p>Neviens neizvelk pats sevi, un vārdi paliek noslēpumā — pat no tevis.</p>
         </div>
 
         ${
           saved.length
             ? `<div class="saved mobile-only-block">
-                <h2>Your draws on this device</h2>
+                <h2>Tavas izlozes šajā ierīcē</h2>
                 ${saved.map((e) => `<a class="saved-item" href="#/o/${esc(e.admin_token)}">${icons.gift(18)}<span>${esc(e.name)}</span></a>`).join('')}
               </div>`
             : ''
@@ -261,12 +273,12 @@ function homePage() {
       ? state.people
           .map(
             (p, i) =>
-              `<span class="chip">${esc(p)}<button type="button" class="chip-x" data-remove="${i}" aria-label="Remove ${esc(p)}">${icons.close()}</button></span>`,
+              `<span class="chip">${esc(p)}<button type="button" class="chip-x" data-remove="${i}" aria-label="Noņemt ${esc(p)}">${icons.close()}</button></span>`,
           )
           .join('')
-      : `<span class="chips-empty">No one yet — add at least 3 people.</span>`;
+      : `<span class="chips-empty">Vēl neviena — pievieno vismaz 3 cilvēkus.</span>`;
     const n = state.people.length;
-    count.textContent = n === 1 ? '1 person' : `${n} people`;
+    count.textContent = cilveki(n);
   }
 
   function addPerson() {
@@ -281,15 +293,15 @@ function homePage() {
     }
     for (const name of parts) {
       if (name.length > 40) {
-        showError('Names can be at most 40 characters.');
+        showError('Vārds var būt ne garāks par 40 rakstzīmēm.');
         return;
       }
       if (state.people.some((p) => p.toLowerCase() === name.toLowerCase())) {
-        showError(`${name} is already on the list.`);
+        showError(`${name} jau ir sarakstā.`);
         return;
       }
       if (state.people.length >= 50) {
-        showError('A draw can have at most 50 people.');
+        showError('Izlozē var būt ne vairāk kā 50 cilvēku.');
         return;
       }
       state.people.push(name);
@@ -323,16 +335,16 @@ function homePage() {
     const min = parseInt(app.querySelector('#bmin').value, 10);
     const max = parseInt(app.querySelector('#bmax').value, 10);
 
-    if (!name) return showError('Give the event a name.');
+    if (!name) return showError('Ieraksti pasākuma nosaukumu.');
     if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0)
-      return showError('Enter the budget as whole euros, for example 20 and 30.');
-    if (min > max) return showError('The minimum budget can’t be higher than the maximum.');
-    if (state.people.length < 3) return showError('Add at least 3 people to the draw.');
+      return showError('Ieraksti budžetu veselos eiro, piemēram, 20 un 30.');
+    if (min > max) return showError('Minimālais budžets nevar būt lielāks par maksimālo.');
+    if (state.people.length < 3) return showError('Pievieno izlozei vismaz 3 cilvēkus.');
 
     showError('');
     state.busy = true;
     submit.disabled = true;
-    submit.querySelector('span').textContent = 'Drawing names…';
+    submit.querySelector('span').textContent = 'Izlozējam…';
     try {
       const ev = await api.createEvent(name, min, max, state.people);
       saveEvent(ev);
@@ -341,7 +353,7 @@ function homePage() {
       showError(err.message);
       state.busy = false;
       submit.disabled = false;
-      submit.querySelector('span').textContent = 'Draw names & create links';
+      submit.querySelector('span').textContent = 'Izlozēt un izveidot saites';
     }
   });
 
@@ -353,9 +365,9 @@ function homePage() {
 const AVATAR_COLORS = ['#C8283A', '#0E3A2C', '#B07A12', '#2F5E8A', '#7E1422', '#3E6B4F', '#8A4B9C', '#A0650B'];
 
 function statusOf(p) {
-  if (p.revealed_at) return { key: 'revealed', label: 'Revealed' };
-  if (p.opened_at) return { key: 'opened', label: 'Opened, not scratched' };
-  return { key: 'waiting', label: 'Not opened yet' };
+  if (p.revealed_at) return { key: 'revealed', label: 'Nokasīts' };
+  if (p.opened_at) return { key: 'opened', label: 'Atvērts, vēl nav nokasīts' };
+  return { key: 'waiting', label: 'Vēl nav atvērts' };
 }
 
 async function organizerPage(adminToken) {
@@ -364,7 +376,7 @@ async function organizerPage(adminToken) {
   try {
     ev = await api.getEventAdmin(adminToken);
   } catch (err) {
-    return errorPage('Link not found', 'This organizer link doesn’t work. Check that you copied the whole link.');
+    return errorPage('Saite nav atrasta', 'Šī organizatora saite nedarbojas. Pārbaudi, vai nokopēji visu saiti.');
   }
   saveEvent(ev);
 
@@ -372,7 +384,7 @@ async function organizerPage(adminToken) {
   const copied = new Set();
 
   function shareText(p) {
-    return `Hi ${p.name}! Here’s your Secret Santa link for “${ev.name}” (gift budget ${budget(ev.budget_min, ev.budget_max)}). Open it yourself — it’s just for you:`;
+    return `Sveiks, ${p.name}! Šī ir tava slepenā rūķīša saite pasākumam “${ev.name}” (dāvanas budžets ${budget(ev.budget_min, ev.budget_max)}). Atver to pats — tā ir tikai tev:`;
   }
 
   function render() {
@@ -384,25 +396,25 @@ async function organizerPage(adminToken) {
       <div class="page page-org">
         ${flakes()}
         <div class="wrap">
-          ${header('Organizer', '#/')}
+          ${header('Organizators', '#/')}
           <section class="hero">
-            <span class="badge">${icons.check(14)}Names drawn</span>
+            <span class="badge">${icons.check(14)}Vārdi izlozēti</span>
             <h1>${esc(ev.name)}</h1>
-            <p class="lede">Send each person their link by WhatsApp, email or text. Each one opens a private scratch card.</p>
+            <p class="lede">Nosūti katram savu saiti pa WhatsApp, e-pastu vai īsziņu. Katra saite atver personīgu nokasāmo biļeti.</p>
           </section>
 
           <div class="org-grid">
             <aside class="org-side">
               <div class="panel stats">
                 <div class="stat-budget">
-                  <span class="muted-label">Gift budget</span>
+                  <span class="muted-label">Dāvanas budžets</span>
                   <span class="big-num">${budget(ev.budget_min, ev.budget_max)}</span>
                 </div>
                 <div class="panel-divider"></div>
                 <div class="stat-row">
-                  <div><span class="num">${total}</span><span class="muted-label">People</span></div>
-                  <div><span class="num gold">${opened}</span><span class="muted-label">Opened</span></div>
-                  <div><span class="num gold">${revealed}</span><span class="muted-label">Revealed</span></div>
+                  <div><span class="num">${total}</span><span class="muted-label">Cilvēki</span></div>
+                  <div><span class="num gold">${opened}</span><span class="muted-label">Atvēruši</span></div>
+                  <div><span class="num gold">${revealed}</span><span class="muted-label">Nokasījuši</span></div>
                 </div>
                 <div class="progress" aria-hidden="true">
                   <span style="width:${total ? (revealed / total) * 100 : 0}%" class="p-rev"></span>
@@ -411,9 +423,9 @@ async function organizerPage(adminToken) {
               </div>
 
               <div class="panel org-link">
-                <div class="org-link-head">${icons.key()}<strong>Your organizer link</strong></div>
-                <p>Bookmark or save this link — it’s how you get back to this page. Don’t share it.</p>
-                <button type="button" class="btn btn-outline" data-copy-org>${icons.copy()}Copy organizer link</button>
+                <div class="org-link-head">${icons.key()}<strong>Tava organizatora saite</strong></div>
+                <p>Saglabā šo saiti — ar to tu atgriezīsies šajā lapā. Nevienam to nesūti.</p>
+                <button type="button" class="btn btn-outline" data-copy-org>${icons.copy()}Kopēt organizatora saiti</button>
               </div>
 
               <div class="panel org-link org-advent">
@@ -424,18 +436,18 @@ async function organizerPage(adminToken) {
 
               <div class="panel note-panel">
                 ${icons.shield()}
-                <p>You only see who has opened their link — never who drew whom. Nobody draws themselves.</p>
+                <p>Tu redzi tikai, kurš atvēris savu saiti — nekad, kurš kuru izvilka. Neviens neizvelk pats sevi.</p>
               </div>
 
-              <button type="button" class="btn btn-ghost" data-redraw>${icons.redo()}Redraw names</button>
+              <button type="button" class="btn btn-ghost" data-redraw>${icons.redo()}Izlozēt no jauna</button>
             </aside>
 
             <section class="card links-card" aria-labelledby="links-h">
               <div class="links-head">
-                <h2 id="links-h">Magic links</h2>
+                <h2 id="links-h">Slepenās saites</h2>
                 <div class="links-actions">
-                  <button type="button" class="icon-btn light" data-refresh aria-label="Refresh status">${icons.refresh()}</button>
-                  <button type="button" class="btn btn-gold btn-sm" data-copy-all>${icons.copy()}Copy all</button>
+                  <button type="button" class="icon-btn light" data-refresh aria-label="Atjaunot statusu">${icons.refresh()}</button>
+                  <button type="button" class="btn btn-gold btn-sm" data-copy-all>${icons.copy()}Kopēt visas</button>
                 </div>
               </div>
               <ul class="people">
@@ -454,11 +466,11 @@ async function organizerPage(adminToken) {
                       <div class="person-actions">
                         ${
                           canShare
-                            ? `<button type="button" class="icon-btn outline" data-share="${i}" aria-label="Share ${esc(p.name)}’s link">${icons.share()}</button>`
+                            ? `<button type="button" class="icon-btn outline" data-share="${i}" aria-label="Dalīties ar saiti: ${esc(p.name)}">${icons.share()}</button>`
                             : ''
                         }
                         <button type="button" class="btn btn-sm ${isCopied ? 'btn-copied' : 'btn-outline-dark'}" data-copy="${i}">
-                          ${isCopied ? `${icons.check()}Copied` : `${icons.link()}Copy link`}
+                          ${isCopied ? `${icons.check()}Nokopēts` : `${icons.link()}Kopēt saiti`}
                         </button>
                       </div>
                     </li>`;
@@ -467,7 +479,7 @@ async function organizerPage(adminToken) {
               </ul>
               <div class="warn">
                 ${icons.warn()}
-                <p>Don’t open other people’s links — that would reveal their match. The status updates automatically.</p>
+                <p>Neatver citu cilvēku saites — tā tu uzzinātu, ko viņi izvilka. Statuss atjaunojas automātiski.</p>
               </div>
             </section>
           </div>
@@ -479,9 +491,9 @@ async function organizerPage(adminToken) {
     try {
       ev = await api.getEventAdmin(adminToken);
       render();
-      if (showToast) toast('Status updated');
+      if (showToast) toast('Statuss atjaunots');
     } catch {
-      if (showToast) toast('Couldn’t refresh — check your connection');
+      if (showToast) toast('Neizdevās atjaunot — pārbaudi interneta savienojumu');
     }
   }
 
@@ -494,39 +506,39 @@ async function organizerPage(adminToken) {
       if (await copyText(participantUrl(p.token))) {
         copied.add(p.token);
         render();
-        toast(`${p.name}’s link copied`);
-      } else toast('Couldn’t copy — press and hold the link instead');
+        toast(`Saite nokopēta: ${p.name}`);
+      } else toast('Neizdevās nokopēt');
     } else if (t.hasAttribute('data-share')) {
       const p = ev.participants[Number(t.dataset.share)];
       try {
-        await navigator.share({ title: 'Your Secret Santa link', text: shareText(p), url: participantUrl(p.token) });
+        await navigator.share({ title: 'Tava slepenā rūķīša saite', text: shareText(p), url: participantUrl(p.token) });
         copied.add(p.token);
         render();
       } catch {
         /* cancelled */
       }
     } else if (t.hasAttribute('data-copy-all')) {
-      const text = `${ev.name} — Secret Santa links (budget ${budget(ev.budget_min, ev.budget_max)})\n\n${ev.participants
+      const text = `${ev.name} — slepenā rūķīša saites (budžets ${budget(ev.budget_min, ev.budget_max)})\n\n${ev.participants
         .map((p) => `${p.name}: ${participantUrl(p.token)}`)
         .join('\n')}`;
       if (await copyText(text)) {
         ev.participants.forEach((p) => copied.add(p.token));
         render();
-        toast('All links copied');
-      } else toast('Couldn’t copy');
+        toast('Visas saites nokopētas');
+      } else toast('Neizdevās nokopēt');
     } else if (t.hasAttribute('data-copy-org')) {
-      (await copyText(organizerUrl(adminToken))) ? toast('Organizer link copied') : toast('Couldn’t copy');
+      (await copyText(organizerUrl(adminToken))) ? toast('Organizatora saite nokopēta') : toast('Neizdevās nokopēt');
     } else if (t.hasAttribute('data-refresh')) {
       refresh(true);
     } else if (t.hasAttribute('data-redraw')) {
       const ok = window.confirm(
-        'Redraw all names?\n\nEveryone keeps the same link, but they will get a new person. Anyone who already scratched their card will need to scratch again.',
+        'Izlozēt visus vārdus no jauna?\n\nKatram saglabāsies tā pati saite, bet izlozētais cilvēks mainīsies. Tiem, kas jau nokasīja biļeti, tā būs jānokasa vēlreiz.',
       );
       if (!ok) return;
       try {
         ev = await api.redrawEvent(adminToken);
         render();
-        toast('Names redrawn');
+        toast('Vārdi izlozēti no jauna');
       } catch (err) {
         toast(err.message);
       }
@@ -548,12 +560,12 @@ async function organizerPage(adminToken) {
 // ---------- participant: scratch & reveal ----------
 
 async function participantPage(token) {
-  loading('Opening your card…');
+  loading('Atveram tavu biļeti…');
   let card;
   try {
     card = await api.openCard(token);
   } catch {
-    return errorPage('Link not found', 'This Secret Santa link doesn’t work. Ask the organizer to send it again.');
+    return errorPage('Saite nav atrasta', 'Šī saite nedarbojas. Palūdz organizatoram to atsūtīt vēlreiz.');
   }
 
   if (card.revealed && card.receiver_name) return renderRevealed(card, false, token);
@@ -563,8 +575,8 @@ async function participantPage(token) {
 function infoTiles(card) {
   return `
     <div class="tiles">
-      <div class="tile"><span class="muted-label">Budget</span><span class="tile-num">${budget(card.budget_min, card.budget_max)}</span></div>
-      <div class="tile"><span class="muted-label">Participants</span><span class="tile-num">${card.participant_count} people</span></div>
+      <div class="tile"><span class="muted-label">Budžets</span><span class="tile-num">${budget(card.budget_min, card.budget_max)}</span></div>
+      <div class="tile"><span class="muted-label">Dalībnieki</span><span class="tile-num">${cilveki(card.participant_count)}</span></div>
     </div>`;
 }
 
@@ -576,10 +588,11 @@ function renderScratch(token, card) {
       <div class="wrap card-grid">
         <section class="hero hero-card">
           <span class="eyebrow">${esc(card.event_name)}</span>
-          <h1>Ho ho ho, <em>${esc(card.my_name)}!</em></h1>
+          <h1>Ho ho ho, <em>priecīgus Ziemassvētkus!</em></h1>
           <p class="lede">
-            <span class="touch-only">Scratch the golden card with your finger to find out who you’re buying a gift for.</span>
-            <span class="mouse-only">Drag your mouse over the golden card to scratch it off and see who you’re buying a gift for.</span>
+            <strong>${esc(card.my_name)}</strong>, šis ir tavs slepenais rūķītis.
+            <span class="touch-only">Nokasi zelta biļeti ar pirkstu, lai redzētu, kam tu gādāsi dāvanu!</span>
+            <span class="mouse-only">Nokasi zelta biļeti ar peli, lai redzētu, kam tu gādāsi dāvanu!</span>
           </p>
           <div class="desktop-only">${infoTiles(card)}</div>
         </section>
@@ -588,16 +601,16 @@ function renderScratch(token, card) {
           <div class="ticket">
             <div class="ticket-inner">
               <div class="under">
-                <span class="under-label">You’re gifting</span>
+                <span class="under-label">Tu dāvini</span>
                 <span class="under-name" id="match" aria-live="polite">…</span>
               </div>
-              <canvas class="foil" aria-label="Scratch card. Scratch or use the reveal button." role="img"></canvas>
+              <canvas class="foil" aria-label="Nokasāmā biļete. Nokasi to vai izmanto pogu “atklāt uzreiz”." role="img"></canvas>
             </div>
           </div>
           <p class="scratch-hint">
             ${icons.hand()}
-            <span><span class="touch-only">Rub with your finger — or</span><span class="mouse-only">Scratch with your mouse — or</span></span>
-            <button type="button" class="link-btn" id="revealbtn">tap to reveal</button>
+            <span><span class="touch-only">Kasi ar pirkstu — vai</span><span class="mouse-only">Kasi ar peli — vai</span></span>
+            <button type="button" class="link-btn" id="revealbtn">atklāt uzreiz</button>
           </p>
           <div class="form-error" id="carderr" role="alert" hidden></div>
           ${adventEntry(token)}
@@ -623,7 +636,7 @@ function renderScratch(token, card) {
         })
         .catch((err) => {
           revealPromise = null;
-          errEl.textContent = 'Couldn’t load your match. Check your connection and try again.';
+          errEl.textContent = 'Neizdevās ielādēt. Pārbaudi interneta savienojumu un mēģini vēlreiz.';
           errEl.hidden = false;
           throw err;
         });
@@ -660,12 +673,12 @@ function renderRevealed(card, celebrate, token) {
       <div class="wrap card-grid">
         <section class="hero hero-card">
           ${icons.star(40)}
-          <span class="eyebrow mobile-only">${esc(card.my_name)}, you’re the Secret Santa for</span>
-          <h1 class="sr-only mobile-only">Your Secret Santa match: ${esc(card.receiver_name)}</h1>
+          <span class="eyebrow mobile-only">${esc(card.my_name)}, tu gādā dāvanu šim cilvēkam:</span>
+          <h1 class="sr-only mobile-only">Tu gādā dāvanu: ${esc(card.receiver_name)}</h1>
           <div class="desktop-only hero-stack">
             <span class="eyebrow">${esc(card.event_name)}</span>
-            <h1>Merry Christmas, <em>${esc(card.my_name)}!</em></h1>
-            <p class="lede">You’re the Secret Santa for ${esc(card.receiver_name)}. Pick something lovely for ${budget(card.budget_min, card.budget_max)} and keep it a secret until the gifts are opened.</p>
+            <h1>Priecīgus Ziemassvētkus, <em>${esc(card.my_name)}!</em></h1>
+            <p class="lede">Tu esi slepenais rūķītis, un tavs dāvanas saņēmējs ir <strong>${esc(card.receiver_name)}</strong>. Izvēlies kaut ko jauku par ${budget(card.budget_min, card.budget_max)} un glabā noslēpumu līdz dāvanu atvēršanai!</p>
           </div>
         </section>
 
@@ -673,24 +686,24 @@ function renderRevealed(card, celebrate, token) {
           <div class="ticket">
             <div class="ticket-inner revealed">
               <span class="under-name big">${esc(card.receiver_name)}</span>
-              <span class="pill">${icons.gift(16)}Gift budget ${budget(card.budget_min, card.budget_max)}</span>
+              <span class="pill">${icons.gift(16)}Dāvanas budžets ${budget(card.budget_min, card.budget_max)}</span>
             </div>
           </div>
-          ${adventEntry(token)}
+          ${memoriesEntry(token)}
         </div>
 
         <div class="tips">
           <div class="tip">
             ${icons.lock()}
-            <div><strong>Keep it a secret</strong><span>Only you can see this. Don’t tell ${esc(card.receiver_name)} — or anyone else.</span></div>
+            <div><strong>Glabā noslēpumu</strong><span>To redzi tikai tu. Nevienam to nestāsti — it īpaši ne pašam saņēmējam!</span></div>
           </div>
           <div class="tip">
             ${icons.link(22)}
-            <div><strong>Come back anytime</strong><span>Open your link again whenever you forget. Your result stays the same.</span></div>
+            <div><strong>Atgriezies jebkurā laikā</strong><span>Ja aizmirsti, atver savu saiti vēlreiz — rezultāts nemainīsies.</span></div>
           </div>
         </div>
 
-        <p class="merry">Merry Christmas!</p>
+        <p class="merry">Priecīgus Ziemassvētkus!</p>
       </div>
     </div>`;
 
