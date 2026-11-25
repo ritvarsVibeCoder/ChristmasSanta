@@ -378,3 +378,15 @@ body.no-scroll { overflow: hidden; }
 .santa-banner .sb-name.small { font-size: 17px; }
 .santa-banner .sb-sub { font-size: 13px; color: #fde3e3; }
 .santa-banner .sb-go { margin-left: auto; font-size: 24px; color: var(--gold-light); }
+
+/* link to the saved memories page + its buttons */
+.adv-saved-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 60px; padding: 0 18px;
+  border-radius: 18px; background: var(--cream); color: var(--ink); text-decoration: none; font-size: 16px;
+  border: 2px solid var(--gold); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+.adv-saved-link span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.adv-saved-link span:last-child { font-size: 24px; color: var(--red-text); }
+.adv-saved-link:hover { color: var(--ink); background: #fffaf0; }
+.adv-saved-actions { display: flex; flex-direction: column; gap: 10px; }
+.adv-saved-actions .btn { width: 100%; }

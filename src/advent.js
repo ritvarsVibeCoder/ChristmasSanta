@@ -333,8 +333,19 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           .join('')}
       </section>
 
+      <a class="adv-saved-link" href="#/s/${esc(token)}/advent/saglabatas">
+        <span>${advIcons.pen()}<b>Tavas atmiņas</b> (${mine.length})</span>
+        <span aria-hidden="true">›</span>
+      </a>`;
+  }
+
+  // Next page: the memories this person has saved.
+  function savedListHtml() {
+    if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
+    const mine = view.memories;
+    return `
       <section class="adv-panel" aria-labelledby="my-mem-h">
-        <h2 id="my-mem-h">Tavas atmiņas (${mine.length})</h2>
+        <h2 id="my-mem-h">Saglabātās atmiņas (${mine.length})</h2>
         ${
           mine.length
             ? `<ul class="adv-mylist">${mine
@@ -367,7 +378,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
                        </li>`,
                 )
                 .join('')}</ul>`
-            : '<p class="muted">Tev vēl nav nevienas atmiņas. Izvēlies kādu jautājumu augstāk!</p>'
+            : '<p class="muted">Tev vēl nav nevienas atmiņas.</p>'
         }
       </section>`;
   }
@@ -381,7 +392,35 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
 
   // ----- page -----
 
+  function renderSavedPage() {
+    app.innerHTML = `
+      <div class="page page-advent">
+        ${lights()}
+        ${flakes()}
+        <div class="wrap adv-wrap">
+          <header class="topbar">
+            <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz galveno lapu">${icons.back()}</a>
+            <span class="brand">${icons.star(28)}<span>Tavas atmiņas</span></span>
+          </header>
+          ${santaBanner()}
+          <section class="hero adv-hero">
+            <span class="eyebrow">${esc(st.event_name)}</span>
+            <h1>Tavas <em>atmiņas</em></h1>
+            <p class="lede">Šīs atmiņas jau ir ieliktas adventes kalendārā. Kamēr to diena vēl nav atvērusies, vari tās labot vai izdzēst.</p>
+          </section>
+          <div class="adv-body">
+            ${savedListHtml()}
+            <div class="adv-saved-actions">
+              <a class="btn btn-gold btn-big" href="#/s/${esc(token)}/advent/atminas">${icons.plus()}Uzrakstīt vēl vienu atmiņu</a>
+              <a class="btn btn-outline" href="#/s/${esc(token)}/advent">${advIcons.calendar(18)}Uz adventes kalendāru</a>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   function render() {
+    if (view.tab === 'saved') return renderSavedPage();
     const tabs = [
       ['calendar', 'Kalendārs'],
       ['memories', 'Manas atmiņas'],
@@ -656,6 +695,10 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
         view.openQuestion = null;
         view.editingId = null;
         toast(id ? 'Atmiņa saglabāta' : 'Paldies! Atmiņa saglabāta un ielikta kalendārā');
+        if (!id) {
+          location.hash = `#/s/${token}/advent/saglabatas`;
+          return;
+        }
         render();
       } catch (err) {
         toast(err.message);
@@ -715,7 +758,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
   });
 
   render();
-  if (view.tab === 'memories') {
+  if (view.tab === 'memories' || view.tab === 'saved') {
     view.memories = await api.adventMyMemories(token).catch(() => []);
     if (alive) render();
   }

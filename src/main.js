@@ -126,9 +126,10 @@ function route() {
   }
   window.scrollTo(0, 0);
   const hash = location.hash.replace(/^#/, '');
-  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent(\/atminas)?)?$/);
+  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent(\/(atminas|saglabatas))?)?$/);
   if (m && m[3] && m[1] === 'o') return adventOrganizerPage(m[2], adventUi());
-  if (m && m[3] && m[1] === 's') return adventParticipantPage(m[2], adventUi(), m[4] ? 'memories' : 'calendar');
+  if (m && m[3] && m[1] === 's')
+    return adventParticipantPage(m[2], adventUi(), m[5] === 'atminas' ? 'memories' : m[5] === 'saglabatas' ? 'saved' : 'calendar');
   if (m && m[1] === 'o') return organizerPage(m[2]);
   if (m && m[1] === 's') return participantPage(m[2]);
   return homePage();
