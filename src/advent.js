@@ -306,12 +306,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
     const mine = view.memories;
     return `
-      ${whyBox(st.config, false)}
-      <section class="adv-panel">
-        <h2>Padalies ar atmiņām</h2>
-        <p>Uzraksti siltu vai smieklīgu atmiņu par sevi vai kādu ģimenes locekli. Atmiņas kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstījis. Tikai <strong>neatklāj savu vārdu</strong>!</p>
-        <p class="muted">Atbildi tikai uz tiem jautājumiem, kuri tev patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Atmiņa uzreiz tiek ielikta kalendārā kādā no nākamajām dienām. Citi to neredzēs, līdz tā diena atvērsies, un līdz tam vari to arī labot vai izdzēst.</p>
-      </section>
+      <p class="adv-fill-hint">Izvēlies jautājumu un uzraksti atmiņu. Tikai <strong>neatklāj savu vārdu</strong>!</p>
 
       <section class="adv-questions" aria-label="Jautājumi">
         ${st.questions

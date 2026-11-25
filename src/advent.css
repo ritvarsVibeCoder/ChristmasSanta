@@ -390,3 +390,6 @@ body.no-scroll { overflow: hidden; }
 .adv-saved-link:hover { color: var(--ink); background: #fffaf0; }
 .adv-saved-actions { display: flex; flex-direction: column; gap: 10px; }
 .adv-saved-actions .btn { width: 100%; }
+
+.adv-fill-hint { margin: 0 4px; font-size: 15px; line-height: 1.5; color: var(--mint); }
+.adv-fill-hint strong { color: var(--gold-light); }
