@@ -13,6 +13,16 @@ const lvPlural = (n, one, many) => (n % 10 === 1 && n % 100 !== 11 ? one : many)
 const dienas = (n) => `${n} ${lvPlural(n, 'diena', 'dienas')}`;
 const punkti = (n) => `${n} ${lvPlural(n, 'punkts', 'punkti')}`;
 const decDate = (d) => `${d}. decembris`;
+// Accusative: "saņemsi 7 punktus", "saņemsi 1 punktu".
+const punktusAcc = (n) => `${n} ${lvPlural(n, 'punktu', 'punktus')}`;
+// Latvian vocative for addressing someone by name: Jānis → Jāni, Edgars → Edgar,
+// Mārtiņš → Mārtiņ; names ending in a vowel (Anna, Līga, Agnese) stay the same.
+const vocative = (name) => {
+  const t = String(name ?? '').trim();
+  if (/[a-zāēīūčšžģķļņ]s$/i.test(t) && !/ss$/i.test(t) && t.length > 2) return t.slice(0, -1);
+  if (/š$/i.test(t) && t.length > 2) return t.slice(0, -1);
+  return t;
+};
 
 const TIMEZONES = [
   ['Europe/Riga', 'Latvija (Rīga)'],
@@ -137,7 +147,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     }
     if (st.today > 24) return 'Adventes laiks ir galā. Paldies, ka piedalījies! Rezultātus vari apskatīt finālā.';
     if (st.today === 24) return 'Ziemassvētku vakars! Atver pēdējās durvis un apskaties finālu.';
-    return `Šodien ir <strong>${decDate(st.today)}</strong>. Atver šodienas durvis un uzmini, kurš no ģimenes dalījies ar atmiņu!`;
+    return `Šodien ir <strong>${decDate(st.today)}</strong>. Atver šodienas durvis un uzmini, kurš no ģimenes ir dalījies ar šo atmiņu!`;
   }
 
   function scoreCard() {
@@ -156,11 +166,11 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
         </div>
         ${
           nm && st.today >= 1 && nm.left <= 24 - st.today + 1
-            ? `<p class="adv-hint">Vēl ${dienas(nm.left)} pēc kārtas — un saņemsi <strong>+${nm.points}</strong> bonusu.</p>`
+            ? `<p class="adv-hint">Mini vēl ${dienas(nm.left)} pēc kārtas un saņemsi <strong>+${punktusAcc(nm.points)}</strong> bonusā!</p>`
             : ''
         }
         <p class="adv-hint muted">${
-          st.finale ? 'Kopvērtējums ir atklāts — apskaties sadaļu “Fināls”!' : 'Citu punkti un kopvērtējums tiks atklāti 24. decembrī.'
+          st.finale ? 'Kopvērtējums ir atklāts — apskaties sadaļu „Fināls”!' : 'Citu punkti un kopvērtējums tiks atklāti 24. decembrī.'
         }</p>
       </section>`;
   }
@@ -216,7 +226,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
   }
 
   function rulesCard() {
-    const b = st.config.streak_bonuses.map((x) => `${dienas(x.days)}: +${x.points}`).join(' · ');
+    const b = st.config.streak_bonuses.map((x) => `${dienas(x.days)} pēc kārtas — +${x.points}`).join(' · ');
     return `
       <details class="adv-rules">
         <summary>Kā spēlēt?</summary>
@@ -224,8 +234,8 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           <li>Katru dienu atveras jaunas durvis ar kāda ģimenes locekļa atmiņu.</li>
           <li>Izvēlies, kurš to uzrakstīja. Tev ir <strong>viens minējums</strong> — to nevar mainīt.</li>
           <li>Pareiza atbilde: <strong>+${st.config.correct_points}</strong> punkti.</li>
-          <li>Sērijas bonusi par minēšanu tieši tajā dienā: ${b}. Visas 24 dienas: +${st.config.complete_bonus}.</li>
-          <li>Nokavētas dienas vari minēt vēlāk — punkti skaitās, bet sērija neatjaunojas.</li>
+          <li>Sērijas bonusi, ja min tieši tajā pašā dienā: ${b}. Par visām 24 dienām: +${st.config.complete_bonus}.</li>
+          <li>Nokavētās dienas vari minēt vēlāk — punkti skaitās, bet sērija neatjaunojas.</li>
           <li>Ja durvīs ir tava atmiņa, tev nav jāmin, un sērija nepārtrūkst.</li>
           <li>Uzvarētāju atklāsim 24. decembrī, Ziemassvētku vakarā!</li>
         </ul>
@@ -242,8 +252,8 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     return `
       <section class="adv-panel">
         <h2>Padalies ar atmiņām</h2>
-        <p>Uzraksti siltu vai smieklīgu atmiņu — par sevi vai par kādu no ģimenes. Tās kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstīja. Tikai <strong>neatklāj savu vārdu</strong>!</p>
-        <p class="muted">Atbildi tikai uz tiem jautājumiem, kas patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Tavas atmiņas redz tikai organizators, līdz tās parādās kalendārā.</p>
+        <p>Uzraksti siltu vai smieklīgu atmiņu par sevi vai kādu ģimenes locekli. Atmiņas kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstījis. Tikai <strong>neatklāj savu vārdu</strong>!</p>
+        <p class="muted">Atbildi tikai uz tiem jautājumiem, kuri tev patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Tavas atmiņas redz tikai organizators, līdz tās parādās kalendārā.</p>
       </section>
 
       <section class="adv-questions" aria-label="Jautājumi">
@@ -300,7 +310,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
                        </li>`,
                 )
                 .join('')}</ul>`
-            : '<p class="muted">Vēl neesi uzrakstījis nevienu atmiņu. Izvēlies kādu jautājumu augstāk!</p>'
+            : '<p class="muted">Tev vēl nav nevienas atmiņas. Izvēlies kādu jautājumu augstāk!</p>'
         }
       </section>`;
   }
@@ -331,7 +341,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           </header>
           <section class="hero adv-hero">
             <span class="eyebrow">${esc(st.event_name)}</span>
-            <h1>Sveiks, <em>${esc(st.my_name)}!</em></h1>
+            <h1>Priecīgu adventi, <em>${esc(vocative(st.my_name))}!</em></h1>
             <p class="lede">${intro()}</p>
           </section>
           <nav class="adv-tabs" aria-label="Sadaļas">
@@ -417,7 +427,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     if (d.empty) {
       sheet.innerHTML = sheetShell(
         d.day,
-        `<div class="adv-empty">${advIcons.flake(40)}<p>Aiz šīm durvīm šoreiz atmiņas nav.<br>Atpūties un iedzer krūzi karstas kakao!</p></div>`,
+        `<div class="adv-empty">${advIcons.flake(40)}<p>Aiz šīm durvīm šoreiz atmiņas nav.<br>Atpūties un iedzer krūzi karsta kakao!</p></div>`,
       );
       sheet.querySelector('[data-close]').focus();
       return;
@@ -463,7 +473,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           </fieldset>
           ${
             d.late
-              ? `<p class="adv-note">Šī ir nokavēta diena: par pareizu atbildi saņemsi ${punkti(d.correct_points)}, bet sērija netiks atjaunota.</p>`
+              ? `<p class="adv-note">Šī ir nokavēta diena: par pareizu atbildi saņemsi ${punktusAcc(d.correct_points)}, bet sērija netiks atjaunota.</p>`
               : ''
           }
           <p class="adv-note strong">Tev ir viens minējums — pēc iesniegšanas to vairs nevarēs mainīt.</p>
@@ -657,10 +667,10 @@ function finaleHtml(f, esc) {
     winner = `
       <div class="adv-winner">
         ${advIcons.badge()}
-        <span class="eyebrow">${f.tie ? 'Neizšķirts!' : 'Uzvarētājs'}</span>
+        <span class="eyebrow">${f.tie ? 'Neizšķirts!' : 'Uzvar'}</span>
         <h2>${joined}</h2>
-        <p class="adv-award">Ģimenes atmiņu meistar${names.length > 1 ? 'i' : 's'} ${f.year}</p>
-        <p class="adv-award-sub">${punkti(f.top_score)}${f.tie ? ' — vienāds rezultāts, uzvara tiek dalīta!' : ''}</p>
+        <p class="adv-award">Ģimenes atmiņu zelta zvaigzne ${f.year}</p>
+        <p class="adv-award-sub">${punkti(f.top_score)}${f.tie ? ' — vienāds rezultāts, tāpēc uzvara tiek dalīta!' : ''}</p>
       </div>`;
   }
   return `
@@ -823,7 +833,7 @@ export async function adventOrganizerPage(adminToken, ui) {
             <span>Rādīt autorus</span>
           </label>
         </div>
-        <p class="muted small">Ja arī jūs spēlējat, atstājiet autorus paslēptus, lai nesabojātu minēšanu.</p>
+        <p class="muted small">Ja arī tu spēlē, atstāj autorus paslēptus, lai nesabojātu minēšanu.</p>
         <div class="adv-filter" role="group" aria-label="Filtrs">
           <button type="button" class="${view.filter === 'pending' ? 'active' : ''}" data-filter="pending">Gaida (${c.pending})</button>
           <button type="button" class="${view.filter === 'approved' ? 'active' : ''}" data-filter="approved">Apstiprinātas (${c.approved})</button>
@@ -834,7 +844,7 @@ export async function adventOrganizerPage(adminToken, ui) {
             ? `<ul class="adv-mylist">${list.map(memoryCard).join('')}</ul>`
             : `<p class="muted">${
                 view.filter === 'pending'
-                  ? 'Nav jaunu atmiņu. Pastāstiet ģimenei, ka sadaļā “Manas atmiņas” var dalīties ar atmiņām!'
+                  ? 'Nav jaunu atmiņu. Pastāsti ģimenei, ka sadaļā „Manas atmiņas” var dalīties ar atmiņām!'
                   : 'Šeit vēl nekā nav.'
               }</p>`
         }
@@ -911,7 +921,7 @@ export async function adventOrganizerPage(adminToken, ui) {
         <h2>Spēles iestatījumi</h2>
         ${
           locked
-            ? `<p class="adv-lock-note">${advIcons.lock(16)} Kalendārs jau ir sācies, tāpēc iestatījumus vairs nevar mainīt — tā neviena jau nopelnītie punkti nemainās.</p>`
+            ? `<p class="adv-lock-note">${advIcons.lock(16)} Kalendārs jau ir sācies, tāpēc iestatījumus vairs nevar mainīt — lai nevienam jau nopelnītie punkti nemainītos.</p>`
             : '<p class="muted">Iestatījumus var mainīt līdz 1. decembrim. Pēc tam tie tiek nofiksēti, lai spēle būtu godīga.</p>'
         }
         <fieldset ${locked ? 'disabled' : ''}>
@@ -928,7 +938,7 @@ export async function adventOrganizerPage(adminToken, ui) {
 
           <div class="set-field">
             <span class="set-label">Sērijas bonusi</span>
-            <span class="muted small">Par minēšanu tieši tajā dienā vairākas dienas pēc kārtas. Katru bonusu var nopelnīt vienreiz.</span>
+            <span class="muted small">Par minēšanu tieši tajā pašā dienā vairākas dienas pēc kārtas. Katru bonusu var nopelnīt tikai vienreiz.</span>
             <div class="bonus-rows">${rows || '<p class="muted small">Sērijas bonusu nav.</p>'}</div>
             ${d.streak_bonuses.length < 8 ? `<button type="button" class="btn btn-sm btn-outline-dark" data-badd>${icons.plus()}Pievienot bonusu</button>` : ''}
           </div>
@@ -963,7 +973,7 @@ export async function adventOrganizerPage(adminToken, ui) {
           <section class="hero adv-hero">
             <span class="eyebrow">${esc(st.event_name)}</span>
             <h1>Atmiņu <em>pārvaldība</em></h1>
-            <p class="lede">Apstipriniet ģimenes atmiņas un ielieciet tās kalendāra dienās. Neapstiprinātas atmiņas kalendārā nekad neparādās.</p>
+            <p class="lede">Apstiprini ģimenes atmiņas un ieliec tās kalendāra dienās. Neapstiprinātas atmiņas kalendārā nekad neparādās.</p>
           </section>
           <nav class="adv-tabs" aria-label="Sadaļas">
             ${[['manage', 'Atmiņas'], ['settings', 'Iestatījumi'], ...(finaleOpen ? [['finale', 'Fināls']] : [])]

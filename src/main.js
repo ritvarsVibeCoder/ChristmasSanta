@@ -13,6 +13,14 @@ const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const budget = (min, max) => (min === max ? `€${min}` : `€${min}–€${max}`);
+// Latvian vocative for addressing someone by name: Jānis → Jāni, Edgars → Edgar,
+// Mārtiņš → Mārtiņ; names ending in a vowel (Anna, Līga, Agnese) stay the same.
+const vocative = (name) => {
+  const t = String(name ?? '').trim();
+  if (/[a-zāēīūčšžģķļņ]s$/i.test(t) && !/ss$/i.test(t) && t.length > 2) return t.slice(0, -1);
+  if (/š$/i.test(t) && t.length > 2) return t.slice(0, -1);
+  return t;
+};
 const cilveki = (n) => `${n} ${n === 0 ? 'cilvēku' : n % 10 === 1 && n % 100 !== 11 ? 'cilvēks' : 'cilvēki'}`;
 
 const baseUrl = () => `${location.origin}${location.pathname}`;
@@ -157,7 +165,7 @@ const PEN_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" st
 const memoriesEntry = (token) => `
   <a class="advent-entry memories" href="#/s/${esc(token)}/advent/atminas">
     <span class="ae-ico">${PEN_ICON}</span>
-    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Silta vai smieklīga atmiņa par kādu no ģimenes — decembrī tā kļūs par mīklu adventes kalendārā</span></span>
+    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Uzraksti siltu vai smieklīgu atmiņu par kādu ģimenes locekli — decembrī tā kļūs par mīklu adventes kalendārā.</span></span>
     <span class="ae-go" aria-hidden="true">›</span>
   </a>
   ${adventEntry(token)}`;
@@ -186,11 +194,11 @@ function homePage() {
           ${header('Organizators')}
           <section class="hero">
             <h1>Sarīko <em>ģimenes izlozi</em></h1>
-            <p class="lede">Pievieno visus dalībniekus. Katrs saņems savu slepeno saiti, kur nokasīt biļeti un uzzināt, kam gādās dāvanu.</p>
+            <p class="lede">Pievieno visus dalībniekus. Katrs saņems savu slepeno saiti, kurā varēs nokasīt biļeti un uzzināt, kam jāsarūpē dāvana.</p>
           </section>
           <div class="note desktop-only">
             ${icons.shield()}
-            <p>Neviens neizvelk pats sevi, un vārdi paliek noslēpumā — pat no tevis.</p>
+            <p>Neviens neizvelk pats sevi, un izlozes rezultāti paliek noslēpums — pat tev.</p>
           </div>
           ${
             saved.length
@@ -241,7 +249,7 @@ function homePage() {
 
         <div class="note mobile-only">
           ${icons.shield()}
-          <p>Neviens neizvelk pats sevi, un vārdi paliek noslēpumā — pat no tevis.</p>
+          <p>Neviens neizvelk pats sevi, un izlozes rezultāti paliek noslēpums — pat tev.</p>
         </div>
 
         ${
@@ -276,7 +284,7 @@ function homePage() {
               `<span class="chip">${esc(p)}<button type="button" class="chip-x" data-remove="${i}" aria-label="Noņemt ${esc(p)}">${icons.close()}</button></span>`,
           )
           .join('')
-      : `<span class="chips-empty">Vēl neviena — pievieno vismaz 3 cilvēkus.</span>`;
+      : `<span class="chips-empty">Vēl nav neviena dalībnieka — pievieno vismaz 3 cilvēkus.</span>`;
     const n = state.people.length;
     count.textContent = cilveki(n);
   }
@@ -293,7 +301,7 @@ function homePage() {
     }
     for (const name of parts) {
       if (name.length > 40) {
-        showError('Vārds var būt ne garāks par 40 rakstzīmēm.');
+        showError('Vārds nedrīkst būt garāks par 40 rakstzīmēm.');
         return;
       }
       if (state.people.some((p) => p.toLowerCase() === name.toLowerCase())) {
@@ -384,7 +392,7 @@ async function organizerPage(adminToken) {
   const copied = new Set();
 
   function shareText(p) {
-    return `Sveiks, ${p.name}! Šī ir tava slepenā rūķīša saite pasākumam “${ev.name}” (dāvanas budžets ${budget(ev.budget_min, ev.budget_max)}). Atver to pats — tā ir tikai tev:`;
+    return `Čau, ${vocative(p.name)}! Šī ir tava slepenā rūķīša saite pasākumam „${ev.name}” (dāvanas budžets ${budget(ev.budget_min, ev.budget_max)}). Tā ir tikai tev — nevienam to nepārsūti:`;
   }
 
   function render() {
@@ -430,13 +438,13 @@ async function organizerPage(adminToken) {
 
               <div class="panel org-link org-advent">
                 <div class="org-link-head">${CAL_ICON}<strong>Adventes kalendārs</strong></div>
-                <p>Ģimenes atmiņu spēle decembrī: apstipriniet atmiņas un ielieciet tās kalendāra dienās.</p>
+                <p>Ģimenes atmiņu spēle decembrī: apstiprini atmiņas un ieliec tās kalendāra dienās.</p>
                 <a class="btn btn-gold" href="#/o/${esc(adminToken)}/advent">Atvērt kalendāra pārvaldību</a>
               </div>
 
               <div class="panel note-panel">
                 ${icons.shield()}
-                <p>Tu redzi tikai, kurš atvēris savu saiti — nekad, kurš kuru izvilka. Neviens neizvelk pats sevi.</p>
+                <p>Tu redzi tikai to, kurš ir atvēris savu saiti, bet nekad — kurš kuru izvilcis. Neviens neizvelk pats sevi.</p>
               </div>
 
               <button type="button" class="btn btn-ghost" data-redraw>${icons.redo()}Izlozēt no jauna</button>
@@ -479,7 +487,7 @@ async function organizerPage(adminToken) {
               </ul>
               <div class="warn">
                 ${icons.warn()}
-                <p>Neatver citu cilvēku saites — tā tu uzzinātu, ko viņi izvilka. Statuss atjaunojas automātiski.</p>
+                <p>Neatver citu cilvēku saites — tā tu uzzinātu, kuru viņi izvilkuši. Statuss atjaunojas automātiski.</p>
               </div>
             </section>
           </div>
@@ -588,11 +596,11 @@ function renderScratch(token, card) {
       <div class="wrap card-grid">
         <section class="hero hero-card">
           <span class="eyebrow">${esc(card.event_name)}</span>
-          <h1>Ho ho ho, <em>priecīgus Ziemassvētkus!</em></h1>
+          <h1>Ho, ho, ho! <em>Priecīgus Ziemassvētkus!</em></h1>
           <p class="lede">
-            <strong>${esc(card.my_name)}</strong>, šis ir tavs slepenais rūķītis.
-            <span class="touch-only">Nokasi zelta biļeti ar pirkstu, lai redzētu, kam tu gādāsi dāvanu!</span>
-            <span class="mouse-only">Nokasi zelta biļeti ar peli, lai redzētu, kam tu gādāsi dāvanu!</span>
+            <strong>${esc(vocative(card.my_name))}</strong>, šī ir tava slepenā rūķīša biļete.
+            <span class="touch-only">Nokasi to ar pirkstu, lai redzētu, kam tu gādāsi dāvanu!</span>
+            <span class="mouse-only">Nokasi to ar peli, lai redzētu, kam tu gādāsi dāvanu!</span>
           </p>
           <div class="desktop-only">${infoTiles(card)}</div>
         </section>
@@ -601,16 +609,16 @@ function renderScratch(token, card) {
           <div class="ticket">
             <div class="ticket-inner">
               <div class="under">
-                <span class="under-label">Tu dāvini</span>
+                <span class="under-label">Dāvanu saņems</span>
                 <span class="under-name" id="match" aria-live="polite">…</span>
               </div>
-              <canvas class="foil" aria-label="Nokasāmā biļete. Nokasi to vai izmanto pogu “atklāt uzreiz”." role="img"></canvas>
+              <canvas class="foil" aria-label="Nokasāmā biļete. Nokasi to vai izmanto pogu „atklāj uzreiz”." role="img"></canvas>
             </div>
           </div>
           <p class="scratch-hint">
             ${icons.hand()}
-            <span><span class="touch-only">Kasi ar pirkstu — vai</span><span class="mouse-only">Kasi ar peli — vai</span></span>
-            <button type="button" class="link-btn" id="revealbtn">atklāt uzreiz</button>
+            <span><span class="touch-only">Nokasi ar pirkstu vai</span><span class="mouse-only">Nokasi ar peli vai</span></span>
+            <button type="button" class="link-btn" id="revealbtn">atklāj uzreiz</button>
           </p>
           <div class="form-error" id="carderr" role="alert" hidden></div>
           ${adventEntry(token)}
@@ -673,11 +681,11 @@ function renderRevealed(card, celebrate, token) {
       <div class="wrap card-grid">
         <section class="hero hero-card">
           ${icons.star(40)}
-          <span class="eyebrow mobile-only">${esc(card.my_name)}, tu gādā dāvanu šim cilvēkam:</span>
+          <span class="eyebrow mobile-only">${esc(vocative(card.my_name))}, tavs dāvanas saņēmējs ir</span>
           <h1 class="sr-only mobile-only">Tu gādā dāvanu: ${esc(card.receiver_name)}</h1>
           <div class="desktop-only hero-stack">
             <span class="eyebrow">${esc(card.event_name)}</span>
-            <h1>Priecīgus Ziemassvētkus, <em>${esc(card.my_name)}!</em></h1>
+            <h1>Priecīgus Ziemassvētkus, <em>${esc(vocative(card.my_name))}!</em></h1>
             <p class="lede">Tu esi slepenais rūķītis, un tavs dāvanas saņēmējs ir <strong>${esc(card.receiver_name)}</strong>. Izvēlies kaut ko jauku par ${budget(card.budget_min, card.budget_max)} un glabā noslēpumu līdz dāvanu atvēršanai!</p>
           </div>
         </section>
@@ -695,7 +703,7 @@ function renderRevealed(card, celebrate, token) {
         <div class="tips">
           <div class="tip">
             ${icons.lock()}
-            <div><strong>Glabā noslēpumu</strong><span>To redzi tikai tu. Nevienam to nestāsti — it īpaši ne pašam saņēmējam!</span></div>
+            <div><strong>Glabā noslēpumu</strong><span>To redzi tikai tu. Nestāsti to nevienam — it sevišķi ne pašam dāvanas saņēmējam!</span></div>
           </div>
           <div class="tip">
             ${icons.link(22)}
