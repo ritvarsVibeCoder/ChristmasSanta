@@ -208,7 +208,11 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar', 
     const total = st.score ? st.score.total : 0;
     let notice = '';
     if (st.today < 1) {
-      notice = `<a class="adv-notice" href="${pageHref.memories}"><span>Kalendārs atvērsies <b>1. decembrī</b>. Līdz tam uzraksti atmiņas!</span><span aria-hidden="true">›</span></a>`;
+      notice = `
+        <div class="adv-cta">
+          <p>Kalendārs atvērsies <b>1. decembrī</b>. Līdz tam uzraksti dažas atmiņas!</p>
+          <a class="adv-cta-btn" href="${pageHref.memories}">${advIcons.pen()}<span>Rakstīt atmiņas</span><span aria-hidden="true">›</span></a>
+        </div>`;
     } else if (st.finale) {
       notice = `<a class="adv-notice gold" href="${pageHref.finale}"><span><b>Fināls!</b> Apskati, kurš uzvarēja</span><span aria-hidden="true">›</span></a>`;
     }

@@ -475,3 +475,20 @@ body.no-scroll { overflow: hidden; }
 .how-txt strong { font-family: var(--serif); font-size: 19px; }
 .how-txt small { font-size: 13px; color: var(--ink-2); }
 .how-go { font-size: 26px; color: var(--red-text); }
+
+/* before December: message + a clear button inside the same box */
+.adv-cta {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 16px;
+  background: var(--pine-2); border: 1.5px solid var(--pine-3);
+}
+.adv-cta p { margin: 0 2px; font-size: 15px; line-height: 1.45; }
+.adv-cta b { color: var(--gold-light); }
+.adv-cta-btn {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 12px;
+  background: var(--red); color: var(--cream); text-decoration: none; font-weight: 700; font-size: 16px;
+  box-shadow: inset 0 0 0 2px var(--gold), 0 6px 0 -2px var(--red-dark);
+}
+.adv-cta-btn span:nth-child(2) { flex: 1; }
+.adv-cta-btn span:last-child { font-size: 24px; color: var(--gold-light); }
+.adv-cta-btn svg { color: var(--gold-light); }
+.adv-cta-btn:hover { background: #d83246; color: var(--cream); }
