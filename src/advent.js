@@ -239,7 +239,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar', 
     const hi = extras.length ? Math.max(...extras) : 0;
     return `
       <ol class="rules-steps">
-        <li><span class="rs-n">1</span><span>Līdz <b>1. decembrim</b> uzraksti atmiņas.</span></li>
+        <li><span class="rs-n">1</span><span>Līdz <b>1. decembrim</b> izvēlies <b>5 jautājumus</b> no saraksta un uzraksti atmiņas.</span></li>
         <li><span class="rs-n">2</span><span>Katru dienu atver durvis un <b>uzmini, kurš rakstīja</b>. Tev ir 2 mēģinājumi.</span></li>
         <li><span class="rs-n">3</span><span>Krāj punktus — uzvarētājam <b>balviņa</b>!</span></li>
       </ol>
