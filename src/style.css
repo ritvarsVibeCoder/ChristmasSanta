@@ -451,3 +451,14 @@ a:hover { color: var(--gold-light); }
   .page-home .role { display: none; }
   .page-revealed .hero-card { padding: 0; }
 }
+
+/* gold circle arrow on the Secret Santa card page */
+.card-back {
+  position: absolute; z-index: 6; top: calc(14px + env(safe-area-inset-top)); left: 14px;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  padding: 2px 12px 2px 2px; border-radius: 999px; background: rgba(14, 58, 44, 0.85);
+}
+.card-back .icon-btn.back { margin-left: 0; }
+.card-back .cb-label { font-weight: 700; font-size: 15px; color: var(--gold-light); }
+.card-back:hover .cb-label { color: var(--cream); }
+@media (min-width: 900px) { .card-back { top: 24px; left: 32px; } }
