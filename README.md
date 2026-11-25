@@ -30,10 +30,11 @@ Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
   your own memory's day is neutral. Earned bonuses are never removed.
 - **Finale:** standings, winner badge and ties are only revealed from 24 December. Guessing closes after the 24th.
 
+- **Settings** (organizer → "Iestatījumi"): time zone for door opening, points per correct guess,
+  streak bonus milestones (up to 8) and the all-24-days bonus. They can be changed until 1 December and
+  are then locked, so nobody's earned points can change mid-game.
+
 Scoring is computed in the database from immutable guess records; the browser can't write points.
-Settings (time zone, points, bonus milestones) live in `public.advent_settings` per event and can be
-changed with SQL, e.g.
-`update advent_settings set streak_bonuses = '[{"days":3,"points":1},{"days":7,"points":2}]' where event_id = '…';`
 
 ## Tech
 

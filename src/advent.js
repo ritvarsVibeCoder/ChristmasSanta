@@ -14,6 +14,38 @@ const dienas = (n) => `${n} ${lvPlural(n, 'diena', 'dienas')}`;
 const punkti = (n) => `${n} ${lvPlural(n, 'punkts', 'punkti')}`;
 const decDate = (d) => `${d}. decembris`;
 
+const TIMEZONES = [
+  ['Europe/Riga', 'Latvija (Rīga)'],
+  ['Europe/Vilnius', 'Lietuva (Viļņa)'],
+  ['Europe/Tallinn', 'Igaunija (Tallina)'],
+  ['Europe/Helsinki', 'Somija (Helsinki)'],
+  ['Europe/Stockholm', 'Zviedrija (Stokholma)'],
+  ['Europe/Berlin', 'Vācija (Berlīne)'],
+  ['Europe/Amsterdam', 'Nīderlande (Amsterdama)'],
+  ['Europe/Dublin', 'Īrija (Dublina)'],
+  ['Europe/London', 'Lielbritānija (Londona)'],
+  ['America/New_York', 'ASV austrumkrasts (Ņujorka)'],
+  ['America/Chicago', 'ASV centrs (Čikāga)'],
+  ['America/Los_Angeles', 'ASV rietumkrasts (Losandželosa)'],
+  ['Australia/Sydney', 'Austrālija (Sidneja)'],
+];
+const tzLabel = (tz) => {
+  if (tz === 'Europe/Riga') return 'pēc Latvijas laika';
+  const t = TIMEZONES.find(([id]) => id === tz);
+  return `pēc laika joslas: ${t ? t[1] : tz}`;
+};
+const DEFAULT_SETTINGS = {
+  tz: 'Europe/Riga',
+  correct_points: 7,
+  streak_bonuses: [
+    { days: 3, points: 1 },
+    { days: 5, points: 1 },
+    { days: 7, points: 2 },
+    { days: 14, points: 2 },
+  ],
+  complete_bonus: 3,
+};
+
 const advIcons = {
   lock: (s = 18) =>
     `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
@@ -178,7 +210,7 @@ export async function adventParticipantPage(token, ui) {
           <span><i class="lg lg-wrong"></i>Nepareizi</span>
           <span><i class="lg lg-own"></i>Tava atmiņa</span>
         </div>
-        <p class="adv-note">Durvis atveras katru dienu plkst. 00:00 pēc Latvijas laika. Nokavētās dienas vari atvērt arī vēlāk.</p>
+        <p class="adv-note">Durvis atveras katru dienu plkst. 00:00 ${tzLabel(st.config.tz)}. Nokavētās dienas vari atvērt arī vēlāk.</p>
       </section>
       ${rulesCard()}`;
   }
@@ -675,7 +707,7 @@ export async function adventOrganizerPage(adminToken, ui) {
   } catch {
     /* ignore */
   }
-  const view = { filter: 'pending', editingId: null, finale: null, tab: 'manage' };
+  const view = { filter: 'pending', editingId: null, finale: null, tab: 'manage', draft: null };
 
   const counts = () => ({
     pending: st.memories.filter((m) => m.status === 'pending').length,
@@ -813,6 +845,105 @@ export async function adventOrganizerPage(adminToken, ui) {
       </section>`;
   }
 
+  // ----- settings -----
+
+  function currentDraft() {
+    if (!view.draft) {
+      const c = st.config;
+      view.draft = {
+        tz: c.tz,
+        correct_points: c.correct_points,
+        streak_bonuses: c.streak_bonuses.map((b) => ({ ...b })),
+        complete_bonus: c.complete_bonus,
+      };
+    }
+    return view.draft;
+  }
+
+  // Keep what the organizer typed when the form re-renders (adding/removing rows).
+  function readDraftFromForm() {
+    const f = app.querySelector('form[data-settings]');
+    if (!f) return;
+    const num = (el) => (el.value === '' ? '' : Number(el.value));
+    view.draft = {
+      tz: f.querySelector('#set-tz').value,
+      correct_points: num(f.querySelector('#set-correct')),
+      complete_bonus: num(f.querySelector('#set-complete')),
+      streak_bonuses: [...f.querySelectorAll('.bonus-row')].map((r) => ({
+        days: num(r.querySelector('[data-bdays]')),
+        points: num(r.querySelector('[data-bpoints]')),
+      })),
+    };
+  }
+
+  function summaryHtml(d) {
+    const maxBonus = d.streak_bonuses.reduce((a, b) => a + (Number(b.points) || 0), 0) + (Number(d.complete_bonus) || 0);
+    const correct = Number(d.correct_points) || 0;
+    return `<p class="set-summary">Viena pareiza atbilde: <b>${punkti(correct)}</b> · Visi bonusi kopā: <b>${punkti(maxBonus)}</b></p>${
+      maxBonus > correct * 2
+        ? '<p class="adv-warn">Bonusi kopā ir vairāk nekā divas pareizas atbildes — tad sērija var ietekmēt uzvarētāju vairāk nekā minēšana.</p>'
+        : ''
+    }`;
+  }
+
+  function settingsTab() {
+    const locked = st.today >= 1;
+    const d = currentDraft();
+    const tzOpts = (TIMEZONES.some(([id]) => id === d.tz) ? TIMEZONES : [[d.tz, d.tz], ...TIMEZONES])
+      .map(([id, label]) => `<option value="${esc(id)}" ${id === d.tz ? 'selected' : ''}>${esc(label)}</option>`)
+      .join('');
+    const rows = d.streak_bonuses
+      .map(
+        (b, i) => `
+        <div class="bonus-row">
+          <label><span>Dienas pēc kārtas</span><input type="number" inputmode="numeric" min="2" max="24" data-bdays value="${esc(b.days)}"></label>
+          <label><span>Bonusa punkti</span><input type="number" inputmode="numeric" min="1" max="20" data-bpoints value="${esc(b.points)}"></label>
+          <button type="button" class="icon-btn bonus-del" data-bdel="${i}" aria-label="Noņemt bonusu">${advIcons.trash()}</button>
+        </div>`,
+      )
+      .join('');
+    return `
+      <form class="adv-panel adv-settings" data-settings novalidate>
+        <h2>Spēles iestatījumi</h2>
+        ${
+          locked
+            ? `<p class="adv-lock-note">${advIcons.lock(16)} Kalendārs jau ir sācies, tāpēc iestatījumus vairs nevar mainīt — tā neviena jau nopelnītie punkti nemainās.</p>`
+            : '<p class="muted">Iestatījumus var mainīt līdz 1. decembrim. Pēc tam tie tiek nofiksēti, lai spēle būtu godīga.</p>'
+        }
+        <fieldset ${locked ? 'disabled' : ''}>
+          <div class="set-field">
+            <label for="set-tz">Laika josla, kad atveras durvis</label>
+            <select id="set-tz">${tzOpts}</select>
+            <span class="muted small">Jaunās durvis atveras plkst. 00:00 šajā laika joslā — vienādi visiem.</span>
+          </div>
+
+          <div class="set-field">
+            <label for="set-correct">Punkti par pareizu atbildi</label>
+            <input id="set-correct" type="number" inputmode="numeric" min="1" max="100" value="${esc(d.correct_points)}">
+          </div>
+
+          <div class="set-field">
+            <span class="set-label">Sērijas bonusi</span>
+            <span class="muted small">Par minēšanu tieši tajā dienā vairākas dienas pēc kārtas. Katru bonusu var nopelnīt vienreiz.</span>
+            <div class="bonus-rows">${rows || '<p class="muted small">Sērijas bonusu nav.</p>'}</div>
+            ${d.streak_bonuses.length < 8 ? `<button type="button" class="btn btn-sm btn-outline-dark" data-badd>${icons.plus()}Pievienot bonusu</button>` : ''}
+          </div>
+
+          <div class="set-field">
+            <label for="set-complete">Bonuss par visām 24 dienām</label>
+            <input id="set-complete" type="number" inputmode="numeric" min="0" max="50" value="${esc(d.complete_bonus)}">
+          </div>
+
+          <div id="set-summary" aria-live="polite">${summaryHtml(d)}</div>
+
+          <div class="adv-row wrap">
+            <button type="submit" class="btn btn-red">Saglabāt iestatījumus</button>
+            <button type="button" class="btn btn-plain" data-sdefault>Atjaunot noklusējumu</button>
+          </div>
+        </fieldset>
+      </form>`;
+  }
+
   function render() {
     const finaleOpen = st.today >= 24;
     app.innerHTML = `
@@ -830,13 +961,24 @@ export async function adventOrganizerPage(adminToken, ui) {
             <h1>Atmiņu <em>pārvaldība</em></h1>
             <p class="lede">Apstipriniet ģimenes atmiņas un ielieciet tās kalendāra dienās. Neapstiprinātas atmiņas kalendārā nekad neparādās.</p>
           </section>
-          ${
-            finaleOpen
-              ? `<nav class="adv-tabs"><button type="button" class="adv-tab ${view.tab === 'manage' ? 'active' : ''}" data-otab="manage">Pārvaldība</button><button type="button" class="adv-tab ${view.tab === 'finale' ? 'active' : ''}" data-otab="finale">Fināls</button></nav>`
-              : ''
-          }
+          <nav class="adv-tabs" aria-label="Sadaļas">
+            ${[['manage', 'Atmiņas'], ['settings', 'Iestatījumi'], ...(finaleOpen ? [['finale', 'Fināls']] : [])]
+              .map(
+                ([k, l]) =>
+                  `<button type="button" class="adv-tab ${view.tab === k ? 'active' : ''}" data-otab="${k}" ${view.tab === k ? 'aria-current="page"' : ''}>${l}</button>`,
+              )
+              .join('')}
+          </nav>
           <div class="adv-body">
-            ${view.tab === 'finale' ? (view.finale ? finaleHtml(view.finale, esc) : '<div class="loading adv-loading"><span class="spinner"></span>Ielādējam…</div>') : manageTab()}
+            ${
+              view.tab === 'finale'
+                ? view.finale
+                  ? finaleHtml(view.finale, esc)
+                  : '<div class="loading adv-loading"><span class="spinner"></span>Ielādējam…</div>'
+                : view.tab === 'settings'
+                  ? settingsTab()
+                  : manageTab()
+            }
           </div>
         </div>
       </div>`;
@@ -871,7 +1013,22 @@ export async function adventOrganizerPage(adminToken, ui) {
       render();
     } else if (t.hasAttribute('data-autofill')) {
       run(api.adventAdminAutofill(adminToken), 'Tukšās dienas aizpildītas');
+    } else if (t.hasAttribute('data-badd')) {
+      readDraftFromForm();
+      const used = new Set(view.draft.streak_bonuses.map((b) => b.days));
+      let days = 10;
+      while (used.has(days) && days < 24) days++;
+      view.draft.streak_bonuses.push({ days, points: 1 });
+      render();
+    } else if (t.dataset.bdel !== undefined) {
+      readDraftFromForm();
+      view.draft.streak_bonuses.splice(Number(t.dataset.bdel), 1);
+      render();
+    } else if (t.hasAttribute('data-sdefault')) {
+      view.draft = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+      render();
     } else if (t.dataset.otab) {
+      if (view.tab === 'settings') readDraftFromForm();
       view.tab = t.dataset.otab;
       render();
       if (view.tab === 'finale' && !view.finale) {
@@ -890,6 +1047,12 @@ export async function adventOrganizerPage(adminToken, ui) {
   }
 
   function onChange(e) {
+    if (e.target.closest('form[data-settings]')) {
+      readDraftFromForm();
+      const box = app.querySelector('#set-summary');
+      if (box) box.innerHTML = summaryHtml(view.draft);
+      return;
+    }
     if (e.target.dataset.assign) {
       const v = e.target.value;
       run(api.adventAdminAssign(adminToken, e.target.dataset.assign, v ? Number(v) : null), v ? `Ielikta ${v}. decembrī` : 'Diena noņemta');
@@ -905,6 +1068,29 @@ export async function adventOrganizerPage(adminToken, ui) {
   }
 
   async function onSubmit(e) {
+    if (e.target.hasAttribute('data-settings')) {
+      e.preventDefault();
+      readDraftFromForm();
+      const d = view.draft;
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      try {
+        st = await api.adventAdminSettings(
+          adminToken,
+          d.tz,
+          Number(d.correct_points),
+          d.streak_bonuses.map((b) => ({ days: Number(b.days), points: Number(b.points) })),
+          Number(d.complete_bonus),
+        );
+        view.draft = null;
+        render();
+        toast('Iestatījumi saglabāti');
+      } catch (err) {
+        toast(err.message);
+        btn.disabled = false;
+      }
+      return;
+    }
     if (!e.target.dataset.adminedit) return;
     e.preventDefault();
     const id = e.target.dataset.adminedit;

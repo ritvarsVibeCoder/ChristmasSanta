@@ -43,4 +43,12 @@ export const api = {
   adventAdminAssign: (adminToken, id, day) => rpc('advent_admin_assign', { p_admin_token: adminToken, p_id: id, p_day: day }),
   adventAdminAutofill: (adminToken) => rpc('advent_admin_autofill', { p_admin_token: adminToken }),
   adventAdminFinale: (adminToken) => rpc('advent_admin_finale', { p_admin_token: adminToken }),
+  adventAdminSettings: (adminToken, tz, correctPoints, streakBonuses, completeBonus) =>
+    rpc('advent_admin_settings', {
+      p_admin_token: adminToken,
+      p_tz: tz,
+      p_correct_points: correctPoints,
+      p_streak_bonuses: streakBonuses,
+      p_complete_bonus: completeBonus,
+    }),
 };
