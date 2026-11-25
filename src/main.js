@@ -159,13 +159,6 @@ const adventEntry = (token) => `
     <span class="ae-go" aria-hidden="true">›</span>
   </a>`;
 
-// Gold circle arrow at the top of the card page, leading to the Advent calendar.
-const cardBack = (token) => `
-  <a class="card-back" href="#/s/${esc(token)}/advent" aria-label="Uz adventes kalendāru">
-    <span class="icon-btn back" aria-hidden="true">${icons.back()}</span>
-    <span class="cb-label">Kalendārs</span>
-  </a>`;
-
 const PEN_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
 
 // Shown after the reveal: invite people to share memories for the Advent calendar.
@@ -411,7 +404,7 @@ async function organizerPage(adminToken) {
       <div class="page page-org">
         ${flakes()}
         <div class="wrap">
-          ${header('Organizators', '#/')}
+          ${header('Organizators')}
           <section class="hero">
             <span class="badge">${icons.check(14)}Vārdi izlozēti</span>
             <h1>${esc(ev.name)}</h1>
@@ -600,7 +593,6 @@ function renderScratch(token, card) {
     <div class="page page-card">
       ${garland()}
       ${flakes()}
-      ${cardBack(token)}
       <div class="wrap card-grid">
         <section class="hero hero-card">
           <span class="eyebrow">${esc(card.event_name)}</span>
@@ -686,7 +678,6 @@ function renderRevealed(card, celebrate, token) {
     <div class="page page-card page-revealed">
       ${celebrate ? '<div class="confetti" aria-hidden="true"></div>' : ''}
       ${flakes()}
-      ${cardBack(token)}
       <div class="wrap card-grid">
         <section class="hero hero-card">
           ${icons.star(40)}
