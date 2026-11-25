@@ -477,3 +477,7 @@ a:hover { color: var(--gold-light); }
   .main-card { min-height: 0; }
   .mc-actions { margin-top: 0; }
 }
+.mc-btn.gold { height: 70px; padding: 0 18px 0 12px; gap: 12px; }
+.mc-gift { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--red); color: var(--gold-light); box-shadow: inset 0 0 0 2px var(--gold-light); }
+.mc-txt { flex: 1; display: flex; flex-direction: column; gap: 1px; text-align: left; }
+.mc-txt small { font-size: 13px; font-weight: 700; color: var(--red-text); }

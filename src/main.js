@@ -695,7 +695,11 @@ function renderRevealed(card, celebrate, token) {
           </div>
         </div>
         <nav class="mc-actions" aria-label="Adventes kalendārs">
-          <a class="mc-btn gold" href="${T}/advent"><span>Adventes kalendārs</span><span aria-hidden="true">›</span></a>
+          <a class="mc-btn gold" href="${T}/advent">
+            <span class="mc-gift" aria-hidden="true">${icons.gift(22)}</span>
+            <span class="mc-txt"><span>Adventes kalendārs</span><small>Uzvarētājam — balva!</small></span>
+            <span aria-hidden="true">›</span>
+          </a>
           <a class="mc-btn red" href="${T}/advent/atminas"><span>Rakstīt atmiņas</span><span aria-hidden="true">›</span></a>
           <a class="mc-link" href="${T}/advent/noteikumi">Kā tas strādā?</a>
         </nav>
