@@ -438,8 +438,8 @@ async function organizerPage(adminToken) {
 
               <div class="panel org-link org-advent">
                 <div class="org-link-head">${CAL_ICON}<strong>Adventes kalendārs</strong></div>
-                <p>Ģimenes atmiņu spēle decembrī: apstiprini atmiņas un ieliec tās kalendāra dienās.</p>
-                <a class="btn btn-gold" href="#/o/${esc(adminToken)}/advent">Atvērt kalendāra pārvaldību</a>
+                <p>Ģimenes atmiņu spēle decembrī. Atmiņas kalendārā tiek ieliktas automātiski — šeit vari tās apskatīt.</p>
+                <a class="btn btn-gold" href="#/o/${esc(adminToken)}/advent">Apskatīt atmiņas</a>
               </div>
 
               <div class="panel note-panel">

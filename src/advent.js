@@ -273,7 +273,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
 
   // ----- memories tab -----
 
-  const statusLabel = { pending: 'Gaida apstiprinājumu', approved: 'Apstiprināta', rejected: 'Netiks izmantota' };
+  const statusLabel = { pending: 'Saglabāta', approved: 'Saglabāta', rejected: 'Netiks izmantota' };
 
   function memoriesTab() {
     if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
@@ -283,7 +283,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       <section class="adv-panel">
         <h2>Padalies ar atmiņām</h2>
         <p>Uzraksti siltu vai smieklīgu atmiņu par sevi vai kādu ģimenes locekli. Atmiņas kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstījis. Tikai <strong>neatklāj savu vārdu</strong>!</p>
-        <p class="muted">Atbildi tikai uz tiem jautājumiem, kuri tev patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Tavas atmiņas redz tikai organizators, līdz tās parādās kalendārā.</p>
+        <p class="muted">Atbildi tikai uz tiem jautājumiem, kuri tev patīk. Var uzrakstīt arī vairākas atmiņas vienam jautājumam. Atmiņa uzreiz tiek ielikta kalendārā kādā no nākamajām dienām. Citi to neredzēs, līdz tā diena atvērsies, un līdz tam vari to arī labot vai izdzēst.</p>
       </section>
 
       <section class="adv-questions" aria-label="Jautājumi">
@@ -293,7 +293,6 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
               ? `<form class="adv-q open" data-qform="${q.id}">
                    <label for="mem-new-${q.id}" class="adv-q-title">${esc(q.prompt)}</label>
                    <textarea id="mem-new-${q.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences" placeholder="Reiz, kad biju mazs…"></textarea>
-                   <span class="adv-autofix">Neuztraucies par kļūdām — gramatiku un pieturzīmes izlabosim automātiski.</span>
                    <div class="adv-row">
                      <button type="submit" class="btn btn-red btn-sm">Saglabāt atmiņu</button>
                      <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
@@ -331,7 +330,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
                          </div>
                          <p class="adv-mem-body">${esc(m.body)}</p>
                          ${
-                           m.status === 'pending'
+                           m.editable
                              ? `<div class="adv-row">
                                   <button type="button" class="btn btn-sm btn-outline-dark" data-edit="${m.id}">${advIcons.pen()}Labot</button>
                                   <button type="button" class="btn btn-sm btn-plain" data-del="${m.id}">${advIcons.trash()}Dzēst</button>
@@ -625,18 +624,10 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       try {
         const id = form.dataset.editform || null;
         const qid = Number(form.dataset.qform || form.dataset.qid);
-        btn.textContent = 'Pārbaudām gramatiku…';
-        const fixed = await api.fixGrammar(token, ta.value);
-        view.memories = await api.adventSaveMemory(token, id, qid, fixed.text);
+        view.memories = await api.adventSaveMemory(token, id, qid, ta.value);
         view.openQuestion = null;
         view.editingId = null;
-        toast(
-          fixed.corrected
-            ? 'Paldies! Atmiņa saglabāta — gramatiku izlabojām automātiski'
-            : id
-              ? 'Atmiņa saglabāta'
-              : 'Paldies! Atmiņa saglabāta',
-        );
+        toast(id ? 'Atmiņa saglabāta' : 'Paldies! Atmiņa saglabāta un ielikta kalendārā');
         render();
       } catch (err) {
         toast(err.message);
@@ -770,7 +761,7 @@ export async function adventOrganizerPage(adminToken, ui) {
   } catch {
     /* ignore */
   }
-  const view = { filter: 'pending', editingId: null, finale: null, tab: 'manage', draft: null };
+  const view = { filter: 'approved', editingId: null, finale: null, tab: 'manage', draft: null };
 
   const counts = () => ({
     pending: st.memories.filter((m) => m.status === 'pending').length,
@@ -824,18 +815,18 @@ export async function adventOrganizerPage(adminToken, ui) {
                 ${
                   m.status === 'pending'
                     ? `<button type="button" class="btn btn-sm btn-green" data-review="approved" data-id="${m.id}">${advIcons.check(16)}Apstiprināt</button>
-                       <button type="button" class="btn btn-sm btn-plain" data-review="rejected" data-id="${m.id}">Noraidīt</button>`
+                       <button type="button" class="btn btn-sm btn-plain" data-review="rejected" data-id="${m.id}">Noņemt</button>`
                     : ''
                 }
                 ${m.status === 'approved' ? daySelect(m) : ''}
                 ${
                   m.status === 'approved'
-                    ? `<button type="button" class="btn btn-sm btn-plain" data-review="rejected" data-id="${m.id}">Noraidīt</button>`
+                    ? `<button type="button" class="btn btn-sm btn-plain" data-review="rejected" data-id="${m.id}">Noņemt</button>`
                     : ''
                 }
                 ${
                   m.status === 'rejected'
-                    ? `<button type="button" class="btn btn-sm btn-outline-dark" data-review="approved" data-id="${m.id}">Tomēr apstiprināt</button>`
+                    ? `<button type="button" class="btn btn-sm btn-outline-dark" data-review="approved" data-id="${m.id}">Atjaunot</button>`
                     : ''
                 }
                 <button type="button" class="btn btn-sm btn-plain" data-aedit="${m.id}">${advIcons.pen()}Labot tekstu</button>
@@ -851,8 +842,8 @@ export async function adventOrganizerPage(adminToken, ui) {
     return `
       <section class="adv-stats">
         <div><span class="adv-v">${c.filled}/24</span><span class="adv-k">dienām ir atmiņa</span></div>
-        <div><span class="adv-v">${c.pending}</span><span class="adv-k">gaida pārbaudi</span></div>
-        <div><span class="adv-v">${c.unscheduled}</span><span class="adv-k">apstiprinātas bez dienas</span></div>
+        <div><span class="adv-v">${c.approved}</span><span class="adv-k">atmiņas kopā</span></div>
+        <div><span class="adv-v">${c.unscheduled}</span><span class="adv-k">rezervē (dienas pilnas)</span></div>
       </section>
 
       <section class="adv-panel">
@@ -884,16 +875,15 @@ export async function adventOrganizerPage(adminToken, ui) {
         </div>
         <p class="muted small">Ja arī tu spēlē, atstāj autorus paslēptus, lai nesabojātu minēšanu.</p>
         <div class="adv-filter" role="group" aria-label="Filtrs">
-          <button type="button" class="${view.filter === 'pending' ? 'active' : ''}" data-filter="pending">Gaida (${c.pending})</button>
-          <button type="button" class="${view.filter === 'approved' ? 'active' : ''}" data-filter="approved">Apstiprinātas (${c.approved})</button>
-          <button type="button" class="${view.filter === 'rejected' ? 'active' : ''}" data-filter="rejected">Noraidītas (${c.rejected})</button>
+          <button type="button" class="${view.filter === 'approved' ? 'active' : ''}" data-filter="approved">Kalendārā (${c.approved})</button>
+          <button type="button" class="${view.filter === 'rejected' ? 'active' : ''}" data-filter="rejected">Noņemtas (${c.rejected})</button>
         </div>
         ${
           list.length
             ? `<ul class="adv-mylist">${list.map(memoryCard).join('')}</ul>`
             : `<p class="muted">${
-                view.filter === 'pending'
-                  ? 'Nav jaunu atmiņu. Pastāsti ģimenei, ka sadaļā „Manas atmiņas” var dalīties ar atmiņām!'
+                view.filter === 'approved'
+                  ? 'Vēl nav nevienas atmiņas. Pastāsti ģimenei, ka sadaļā „Manas atmiņas” var dalīties ar atmiņām!'
                   : 'Šeit vēl nekā nav.'
               }</p>`
         }
@@ -1030,7 +1020,7 @@ export async function adventOrganizerPage(adminToken, ui) {
           <section class="hero adv-hero">
             <span class="eyebrow">${esc(st.event_name)}</span>
             <h1>Atmiņu <em>pārvaldība</em></h1>
-            <p class="lede">Apstiprini ģimenes atmiņas un ieliec tās kalendāra dienās. Neapstiprinātas atmiņas kalendārā nekad neparādās.</p>
+            <p class="lede">Atmiņas kalendārā tiek ieliktas automātiski — tev nekas nav jādara. Ja gribi, šeit vari tās apskatīt, pārvietot uz citu dienu vai kādu noņemt.</p>
           </section>
           <nav class="adv-tabs" aria-label="Sadaļas">
             ${[['manage', 'Atmiņas'], ['settings', 'Iestatījumi'], ...(finaleOpen ? [['finale', 'Fināls']] : [])]
@@ -1073,7 +1063,7 @@ export async function adventOrganizerPage(adminToken, ui) {
       view.filter = t.dataset.filter;
       render();
     } else if (t.dataset.review) {
-      const msg = t.dataset.review === 'approved' ? 'Atmiņa apstiprināta' : 'Atmiņa noraidīta';
+      const msg = t.dataset.review === 'approved' ? 'Atmiņa atjaunota kalendārā' : 'Atmiņa noņemta';
       run(api.adventAdminReview(adminToken, t.dataset.id, t.dataset.review), msg);
     } else if (t.dataset.aedit) {
       view.editingId = t.dataset.aedit;
@@ -1167,13 +1157,7 @@ export async function adventOrganizerPage(adminToken, ui) {
     e.preventDefault();
     const id = e.target.dataset.adminedit;
     view.editingId = null;
-    const btn = e.target.querySelector('button[type="submit"]');
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = 'Pārbaudām gramatiku…';
-    }
-    const fixed = await api.fixGrammar(adminToken, e.target.querySelector('textarea').value);
-    run(api.adventAdminEdit(adminToken, id, fixed.text), fixed.corrected ? 'Teksts saglabāts un izlabots' : 'Teksts saglabāts');
+    run(api.adventAdminEdit(adminToken, id, e.target.querySelector('textarea').value), 'Teksts saglabāts');
   }
 
   app.addEventListener('click', onClick);

@@ -19,10 +19,11 @@ A family-memory guessing game for 1–24 December, in Latvian, reached from each
 Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
 
 - **Memories:** participants answer whichever questions they like ("Manas atmiņas"); they can edit or
-  delete a memory until the organizer reviews it. Memories stay private until they appear in the calendar.
-- **Organizer** (`#/o/<admin_token>/advent`, linked from the dashboard): approve / reject / edit memories,
-  pick a day for each (or auto-fill empty days), see which days are filled. Authors are hidden by default.
-  Days that have already opened can't be changed.
+  delete a memory until its day opens. Memories stay private until they appear in the calendar.
+- **Memories go straight in:** a saved memory is placed on a random empty day that hasn't opened yet,
+  exactly as written (no review, no text correction). The author can edit or delete it until that day opens.
+- **Organizer** (`#/o/<admin_token>/advent`, linked from the dashboard): optional - look at memories, move
+  one to another day or remove it. Authors are hidden by default. Days that have already opened can't be changed.
 - **Calendar:** one door per day, opening at 00:00 Latvian time (`Europe/Riga`). Missed days can be opened
   later. One guess per memory (enforced by a unique constraint); the author is revealed right after guessing.
 - **Points:** correct on the 1st attempt +7, on the 2nd attempt +4. Streak bonuses for guessing on the day itself: 3 days +1, 5 days +1,
@@ -35,14 +36,6 @@ Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
   are then locked, so nobody's earned points can change mid-game.
 
 Scoring is computed in the database from immutable guess records; the browser can't write points.
-
-## Automatic grammar fixing (optional AI)
-
-Memories are tidied in the browser (spacing, punctuation, capitals, quotes - `src/textfix.js`) and
-then proofread by Claude through the Supabase Edge Function `supabase/functions/fix-grammar`, which
-only accepts requests carrying a valid family link. To turn the AI part on, add the secret
-`ANTHROPIC_API_KEY` in Supabase → Edge Functions → Secrets. Without it everything still works,
-just without the AI proofreading.
 
 ## Tech
 
