@@ -293,7 +293,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
               ? `<form class="adv-q open" data-qform="${q.id}">
                    <label for="mem-new-${q.id}" class="adv-q-title">${esc(q.prompt)}</label>
                    <textarea id="mem-new-${q.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences" placeholder="Reiz, kad biju mazs…"></textarea>
-                   <span class="adv-autofix">Atstarpes, pieturzīmes un lielos burtus sakārtosim automātiski.</span>
+                   <span class="adv-autofix">Neuztraucies par kļūdām — gramatiku un pieturzīmes izlabosim automātiski.</span>
                    <div class="adv-row">
                      <button type="submit" class="btn btn-red btn-sm">Saglabāt atmiņu</button>
                      <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
@@ -625,10 +625,18 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       try {
         const id = form.dataset.editform || null;
         const qid = Number(form.dataset.qform || form.dataset.qid);
-        view.memories = await api.adventSaveMemory(token, id, qid, ta.value);
+        btn.textContent = 'Pārbaudām gramatiku…';
+        const fixed = await api.fixGrammar(token, ta.value);
+        view.memories = await api.adventSaveMemory(token, id, qid, fixed.text);
         view.openQuestion = null;
         view.editingId = null;
-        toast(id ? 'Atmiņa saglabāta un sakārtota' : 'Paldies! Atmiņa saglabāta un sakārtota');
+        toast(
+          fixed.corrected
+            ? 'Paldies! Atmiņa saglabāta — gramatiku izlabojām automātiski'
+            : id
+              ? 'Atmiņa saglabāta'
+              : 'Paldies! Atmiņa saglabāta',
+        );
         render();
       } catch (err) {
         toast(err.message);
@@ -1159,7 +1167,13 @@ export async function adventOrganizerPage(adminToken, ui) {
     e.preventDefault();
     const id = e.target.dataset.adminedit;
     view.editingId = null;
-    run(api.adventAdminEdit(adminToken, id, e.target.querySelector('textarea').value), 'Teksts saglabāts');
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Pārbaudām gramatiku…';
+    }
+    const fixed = await api.fixGrammar(adminToken, e.target.querySelector('textarea').value);
+    run(api.adventAdminEdit(adminToken, id, fixed.text), fixed.corrected ? 'Teksts saglabāts un izlabots' : 'Teksts saglabāts');
   }
 
   app.addEventListener('click', onClick);

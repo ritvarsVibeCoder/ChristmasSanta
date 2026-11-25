@@ -20,7 +20,25 @@ async function rpc(fn, args) {
   return data;
 }
 
+// AI proofreading (Supabase Edge Function "fix-grammar" → Claude). Never blocks a
+// save: if it is slow, unavailable or not configured, the tidied text is used.
+async function fixGrammar(token, text) {
+  const tidied = tidyLatvianText(text);
+  try {
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 20000));
+    const call = supabase.functions.invoke('fix-grammar', { body: { token, text: tidied } }).then(({ data, error }) =>
+      error || !data || typeof data.text !== 'string' ? null : data,
+    );
+    const res = await Promise.race([call, timeout]);
+    if (res && res.text.trim()) return { text: tidyLatvianText(res.text), corrected: !!res.corrected };
+  } catch {
+    /* fall back to the tidied text */
+  }
+  return { text: tidied, corrected: false };
+}
+
 export const api = {
+  fixGrammar,
   createEvent: (name, budgetMin, budgetMax, names) =>
     rpc('create_event', { p_name: name, p_budget_min: budgetMin, p_budget_max: budgetMax, p_names: names }),
   getEventAdmin: (adminToken) => rpc('get_event_admin', { p_admin_token: adminToken }),

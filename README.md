@@ -36,6 +36,14 @@ Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
 
 Scoring is computed in the database from immutable guess records; the browser can't write points.
 
+## Automatic grammar fixing (optional AI)
+
+Memories are tidied in the browser (spacing, punctuation, capitals, quotes - `src/textfix.js`) and
+then proofread by Claude through the Supabase Edge Function `supabase/functions/fix-grammar`, which
+only accepts requests carrying a valid family link. To turn the AI part on, add the secret
+`ANTHROPIC_API_KEY` in Supabase → Edge Functions → Secrets. Without it everything still works,
+just without the AI proofreading.
+
 ## Tech
 
 - Vite + vanilla JS front-end (`src/`)
