@@ -218,10 +218,14 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar', 
         <div class="points-box"><span class="ss-k">Punkti</span><strong>${total}</strong></div>
       </div>
       ${notice}
+      <a class="how-box" href="${pageHref.rules}">
+        <span class="how-ico" aria-hidden="true">?</span>
+        <span class="how-txt"><strong>Kā spēlēt?</strong><small>Noteikumi un kā krāt punktus</small></span>
+        <span class="how-go" aria-hidden="true">›</span>
+      </a>
       <section class="adv-cal" aria-label="Adventes kalendārs">
         <div class="adv-cal-grid">${st.days.map(doorHtml).join('')}</div>
-      </section>
-      <a class="adv-more" href="${pageHref.rules}">Kā spēlēt? ›</a>`;
+      </section>`;
   }
 
   function rulesView() {

@@ -459,3 +459,19 @@ body.no-scroll { overflow: hidden; }
 .write-form textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(233, 185, 73, 0.45); }
 .write-form textarea::placeholder { color: #8a7f6e; }
 .write-hint { margin: 0; font-size: 15px; color: var(--mint); }
+
+/* "how to play" box right above the calendar */
+.how-box {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 16px 10px 10px;
+  border-radius: 16px; background: var(--cream); color: var(--ink); text-decoration: none;
+  border: 2px solid var(--gold); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+.how-box:hover { color: var(--ink); background: #fffaf0; }
+.how-ico {
+  flex: none; width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center;
+  background: var(--gold); color: var(--ink); font-family: var(--serif); font-size: 24px; font-weight: 700;
+}
+.how-txt { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.how-txt strong { font-family: var(--serif); font-size: 19px; }
+.how-txt small { font-size: 13px; color: var(--ink-2); }
+.how-go { font-size: 26px; color: var(--red-text); }
