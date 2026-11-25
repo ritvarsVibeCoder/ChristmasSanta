@@ -292,7 +292,8 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
             view.openQuestion === q.id
               ? `<form class="adv-q open" data-qform="${q.id}">
                    <label for="mem-new-${q.id}" class="adv-q-title">${esc(q.prompt)}</label>
-                   <textarea id="mem-new-${q.id}" rows="5" maxlength="2000" placeholder="Reiz, kad biju mazs…"></textarea>
+                   <textarea id="mem-new-${q.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences" placeholder="Reiz, kad biju mazs…"></textarea>
+                   <span class="adv-autofix">Atstarpes, pieturzīmes un lielos burtus sakārtosim automātiski.</span>
                    <div class="adv-row">
                      <button type="submit" class="btn btn-red btn-sm">Saglabāt atmiņu</button>
                      <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
@@ -316,7 +317,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
                     ? `<li class="adv-mem editing">
                          <form data-editform="${m.id}" data-qid="${m.question_id}">
                            <label class="adv-mem-title" for="mem-edit-${m.id}">${esc(m.title)}</label>
-                           <textarea id="mem-edit-${m.id}" rows="5" maxlength="2000">${esc(m.body)}</textarea>
+                           <textarea id="mem-edit-${m.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences">${esc(m.body)}</textarea>
                            <div class="adv-row">
                              <button type="submit" class="btn btn-red btn-sm">Saglabāt</button>
                              <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
@@ -627,7 +628,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
         view.memories = await api.adventSaveMemory(token, id, qid, ta.value);
         view.openQuestion = null;
         view.editingId = null;
-        toast(id ? 'Atmiņa saglabāta' : 'Paldies! Atmiņa saglabāta');
+        toast(id ? 'Atmiņa saglabāta un sakārtota' : 'Paldies! Atmiņa saglabāta un sakārtota');
         render();
       } catch (err) {
         toast(err.message);
@@ -795,7 +796,7 @@ export async function adventOrganizerPage(adminToken, ui) {
           editing
             ? `<form data-adminedit="${m.id}">
                  <label class="sr-only" for="ae-${m.id}">Atmiņas teksts</label>
-                 <textarea id="ae-${m.id}" rows="5" maxlength="2000">${esc(m.body)}</textarea>
+                 <textarea id="ae-${m.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences">${esc(m.body)}</textarea>
                  <div class="adv-row">
                    <button type="submit" class="btn btn-sm btn-red">Saglabāt</button>
                    <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { tidyLatvianText } from './textfix.js';
 
 // The publishable key is meant to be public: the database only exposes
 // token-checked functions, and the tables themselves are not readable.
@@ -33,13 +34,14 @@ export const api = {
   adventGuess: (token, day, guessedId) => rpc('advent_guess', { p_token: token, p_day: day, p_guessed_id: guessedId }),
   adventMyMemories: (token) => rpc('advent_my_memories', { p_token: token }),
   adventSaveMemory: (token, id, questionId, body) =>
-    rpc('advent_save_memory', { p_token: token, p_id: id, p_question_id: questionId, p_body: body }),
+    rpc('advent_save_memory', { p_token: token, p_id: id, p_question_id: questionId, p_body: tidyLatvianText(body) }),
   adventDeleteMemory: (token, id) => rpc('advent_delete_memory', { p_token: token, p_id: id }),
   adventFinale: (token) => rpc('advent_finale', { p_token: token }),
   adventAdminState: (adminToken) => rpc('advent_admin_state', { p_admin_token: adminToken }),
   adventAdminReview: (adminToken, id, status) =>
     rpc('advent_admin_review', { p_admin_token: adminToken, p_id: id, p_status: status }),
-  adventAdminEdit: (adminToken, id, body) => rpc('advent_admin_edit', { p_admin_token: adminToken, p_id: id, p_body: body }),
+  adventAdminEdit: (adminToken, id, body) =>
+    rpc('advent_admin_edit', { p_admin_token: adminToken, p_id: id, p_body: tidyLatvianText(body) }),
   adventAdminAssign: (adminToken, id, day) => rpc('advent_admin_assign', { p_admin_token: adminToken, p_id: id, p_day: day }),
   adventAdminAutofill: (adminToken) => rpc('advent_admin_autofill', { p_admin_token: adminToken }),
   adventAdminFinale: (adminToken) => rpc('advent_admin_finale', { p_admin_token: adminToken }),
