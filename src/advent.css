@@ -340,3 +340,24 @@ body.no-scroll { overflow: hidden; }
 .advent-entry.memories .ae-ico { background: var(--gold); color: var(--ink); }
 .advent-entry.memories .ae-sub { color: #fde3e3; }
 .advent-entry + .advent-entry { margin-top: 10px; }
+
+/* why write memories + points list */
+.adv-why {
+  background: var(--cream); color: var(--ink); border-radius: 22px; padding: 20px 18px;
+  border: 2px solid var(--gold); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.adv-why h2 { margin: 0; font-family: var(--serif); font-size: 23px; }
+.adv-why h3 { margin: 6px 0 0; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #8a5a0b; }
+.adv-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.5; }
+.adv-points { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.adv-points li { display: flex; align-items: baseline; gap: 10px; font-size: 15px; line-height: 1.45; }
+.adv-points b { flex: none; min-width: 40px; text-align: center; background: #2e7d4f; color: #fff; border-radius: 999px; padding: 2px 8px; font-size: 14px; }
+.adv-why-foot { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #6f5f4d; }
+.adv-why .btn { align-self: flex-start; margin-top: 4px; }
+.adv-rules .adv-points { margin-top: 6px; }
+.adv-rules .adv-points li { color: var(--mint); font-size: 14px; }
+.lg-retry { background: #c97a12; }
+.door-q.retry { color: #b5650f; }
+.adv-result.retry { background: #fbeccb; color: #5c3b06; }
+.adv-result.retry .adv-result-ico { background: #c97a12; font-family: var(--serif); font-size: 26px; font-weight: 700; }

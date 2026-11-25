@@ -54,7 +54,35 @@ const DEFAULT_SETTINGS = {
     { days: 14, points: 2 },
   ],
   complete_bonus: 3,
+  second_try_points: 4,
 };
+
+// "How points work" list, shown with the memories and in the game rules.
+function pointsList(cfg) {
+  const b = cfg.streak_bonuses.map((x) => `${dienas(x.days)} pēc kārtas — +${x.points}`).join(' · ');
+  return `<ul class="adv-points">
+      <li><b>+${cfg.correct_points}</b><span>pareizi ar 1. mēģinājumu</span></li>
+      <li><b>+${cfg.second_try_points}</b><span>pareizi ar 2. mēģinājumu</span></li>
+      ${b ? `<li><b>+</b><span>sērijas bonusi, ja min tieši tajā pašā dienā: ${b}</span></li>` : ''}
+      ${cfg.complete_bonus ? `<li><b>+${cfg.complete_bonus}</b><span>ja nenokavē nevienu dienu</span></li>` : ''}
+    </ul>`;
+}
+
+function whyBox(cfg, withButton) {
+  return `
+    <section class="adv-why" aria-labelledby="why-h">
+      <h2 id="why-h">Kāpēc rakstīt atmiņas?</h2>
+      <ol class="adv-steps">
+        <li><b>Līdz 1. decembrim</b> uzraksti dažas atmiņas — par sevi vai kādu no ģimenes.</li>
+        <li><b>No 1. līdz 24. decembrim</b> adventes kalendārā katru dienu atveras viena atmiņa. Uzmini, kurš to uzrakstījis!</li>
+        <li><b>Krāj punktus!</b> Kurš savāks visvairāk punktu, Ziemassvētku vakarā saņems <b>balviņu</b>.</li>
+      </ol>
+      <h3>Kā skaita punktus</h3>
+      ${pointsList(cfg)}
+      <p class="adv-why-foot">Katrai atmiņai ir 2 mēģinājumi — vienkārši pieskaries vārdam. Kopvērtējumu atklāsim 24. decembrī.</p>
+      ${withButton ? '<button type="button" class="btn btn-gold" data-tab="memories">Rakstīt atmiņu</button>' : ''}
+    </section>`;
+}
 
 const advIcons = {
   lock: (s = 18) =>
@@ -160,7 +188,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           <span class="adv-score-num">${s.total}</span>
         </div>
         <div class="adv-score-grid">
-          <div><span class="adv-k">Pareizi</span><span class="adv-v">${s.correct_count} × ${st.config.correct_points}</span></div>
+          <div><span class="adv-k">Uzminētas</span><span class="adv-v">${s.correct_count} · +${s.correct_points}</span></div>
           <div><span class="adv-k">Bonusi</span><span class="adv-v">+${s.bonus_points}</span></div>
           <div><span class="adv-k">Sērija</span><span class="adv-v adv-streak">${advIcons.fire()}${s.streak}</span></div>
         </div>
@@ -184,6 +212,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       open: `${d.day}. durvis, vēl jāmin`,
       correct: `${d.day}. durvis, uzminēts pareizi`,
       wrong: `${d.day}. durvis, neuzminēts`,
+      retry: `${d.day}. durvis, vēl viens mēģinājums`,
     };
     const inner = {
       locked: '',
@@ -192,6 +221,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       open: `<span class="door-q">?</span>`,
       correct: `<span class="door-ico green">${advIcons.check()}</span>`,
       wrong: `<span class="door-ico red">${advIcons.cross()}</span>`,
+      retry: `<span class="door-q retry">?</span><span class="door-cap">2. mēģinājums</span>`,
     }[d.state];
     const closed = d.state === 'locked' || d.state === 'open';
     return `
@@ -211,12 +241,13 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
 
   function calendarTab() {
     return `
-      ${st.today >= 1 ? scoreCard() : ''}
+      ${st.today >= 1 ? scoreCard() : whyBox(st.config, true)}
       <section class="adv-cal" aria-label="Adventes kalendārs">
         <div class="adv-cal-grid">${st.days.map(doorHtml).join('')}</div>
         <div class="adv-legend">
           <span><i class="lg lg-open"></i>Jāmin</span>
           <span><i class="lg lg-correct"></i>Pareizi</span>
+          <span><i class="lg lg-retry"></i>Vēl 1 mēģinājums</span>
           <span><i class="lg lg-wrong"></i>Nepareizi</span>
           <span><i class="lg lg-own"></i>Tava atmiņa</span>
         </div>
@@ -226,15 +257,13 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
   }
 
   function rulesCard() {
-    const b = st.config.streak_bonuses.map((x) => `${dienas(x.days)} pēc kārtas — +${x.points}`).join(' · ');
     return `
       <details class="adv-rules">
         <summary>Kā spēlēt?</summary>
         <ul>
           <li>Katru dienu atveras jaunas durvis ar kāda ģimenes locekļa atmiņu.</li>
-          <li>Izvēlies, kurš to uzrakstīja. Tev ir <strong>viens minējums</strong> — to nevar mainīt.</li>
-          <li>Pareiza atbilde: <strong>+${st.config.correct_points}</strong> punkti.</li>
-          <li>Sērijas bonusi, ja min tieši tajā pašā dienā: ${b}. Par visām 24 dienām: +${st.config.complete_bonus}.</li>
+          <li>Pieskaries vārdam, kurš, tavuprāt, to uzrakstīja. Tev ir <strong>2 mēģinājumi</strong>; iesniegtu minējumu mainīt nevar.</li>
+          <li>Punkti:${pointsList(st.config)}</li>
           <li>Nokavētās dienas vari minēt vēlāk — punkti skaitās, bet sērija neatjaunojas.</li>
           <li>Ja durvīs ir tava atmiņa, tev nav jāmin, un sērija nepārtrūkst.</li>
           <li>Uzvarētāju atklāsim 24. decembrī, Ziemassvētku vakarā!</li>
@@ -250,6 +279,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
     const mine = view.memories;
     return `
+      ${whyBox(st.config, false)}
       <section class="adv-panel">
         <h2>Padalies ar atmiņām</h2>
         <p>Uzraksti siltu vai smieklīgu atmiņu par sevi vai kādu ģimenes locekli. Atmiņas kļūs par mīklām kalendārā, un citi minēs, kurš tās uzrakstījis. Tikai <strong>neatklāj savu vārdu</strong>!</p>
@@ -447,18 +477,24 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       body += g.correct
         ? `<div class="adv-result ok ${justGuessed ? 'pop' : ''}">
              <span class="adv-result-ico">${advIcons.check(30)}</span>
-             <div><strong>Pareizi! +${punkti(g.points)}</strong><span>Šo atmiņu uzrakstīja <b>${esc(g.author_name)}</b>.</span></div>
+             <div><strong>Pareizi${g.attempt === 2 ? ' ar otro mēģinājumu' : ''}! +${punkti(g.points)}</strong><span>Šo atmiņu uzrakstīja <b>${esc(g.author_name)}</b>.</span></div>
            </div>`
         : `<div class="adv-result no ${justGuessed ? 'pop' : ''}">
              <span class="adv-result-ico">${advIcons.cross(28)}</span>
-             <div><strong>Šoreiz neuzminēji</strong><span>Tu minēji: ${esc(g.guessed_name)}. Patiesībā to uzrakstīja <b>${esc(g.author_name)}</b>.</span></div>
+             <div><strong>Šoreiz neuzminēji</strong><span>Tu minēji: ${esc(g.first_name && g.first_name !== g.guessed_name ? `${g.first_name}, ${g.guessed_name}` : g.guessed_name)}. Patiesībā to uzrakstīja <b>${esc(g.author_name)}</b>.</span></div>
            </div>`;
       if (!g.on_time) body += `<p class="adv-note">Nokavēta diena: punkti par pareizu atbildi skaitās, bet sērijai šī diena netiek ieskaitīta.</p>`;
     } else if (d.can_guess) {
+      if (d.retry) {
+        body += `<div class="adv-result retry ${justGuessed ? 'pop' : ''}">
+             <span class="adv-result-ico">?</span>
+             <div><strong>Šoreiz ne — tev ir vēl viens mēģinājums!</strong><span>Tu minēji: ${esc(d.retry.guessed_name)}. Par pareizu atbildi tagad saņemsi ${punktusAcc(d.second_try_points)}.</span></div>
+           </div>`;
+      }
       body += `
         <form class="adv-guess" data-guess="${d.day}">
           <fieldset>
-            <legend>Kurš no ģimenes to uzrakstīja?</legend>
+            <legend>${d.retry ? 'Mēģini vēlreiz: kurš to uzrakstīja?' : 'Kurš no ģimenes to uzrakstīja?'}</legend>
             <div class="adv-options">
               ${d.options
                 .map(
@@ -473,10 +509,14 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           </fieldset>
           ${
             d.late
-              ? `<p class="adv-note">Šī ir nokavēta diena: par pareizu atbildi saņemsi ${punktusAcc(d.correct_points)}, bet sērija netiks atjaunota.</p>`
+              ? `<p class="adv-note">Šī ir nokavēta diena: punkti par pareizu atbildi skaitās, bet sērija netiks atjaunota.</p>`
               : ''
           }
-          <p class="adv-note strong">Tev ir viens minējums — pēc iesniegšanas to vairs nevarēs mainīt.</p>
+          <p class="adv-note strong">${
+            d.retry
+              ? 'Šis ir pēdējais mēģinājums — pieskaries vārdam un iesniedz.'
+              : `Pieskaries vārdam un iesniedz. Tev ir 2 mēģinājumi: pareizi ar pirmo — +${d.correct_points}, ar otro — +${d.second_try_points}.`
+          }</p>
           <button type="submit" class="btn btn-red btn-big" disabled>Izvēlies vārdu</button>
         </form>`;
     } else if (d.game_over) {
@@ -689,7 +729,7 @@ function finaleHtml(f, esc) {
             <span class="rank">${r.rank}.</span>
             <div class="st-main">
               <span class="st-name">${esc(r.name)}${f.my_name === r.name ? ' <small>(tu)</small>' : ''}</span>
-              <span class="st-sub">Pareizi: ${r.correct_count} → ${r.correct_points} · Sērijas bonusi: +${r.bonus_points}</span>
+              <span class="st-sub">Uzminētas: ${r.correct_count} → +${r.correct_points} · Sērijas bonusi: +${r.bonus_points}</span>
             </div>
             <span class="st-total">${r.total}</span>
           </li>`,
@@ -867,6 +907,7 @@ export async function adventOrganizerPage(adminToken, ui) {
       view.draft = {
         tz: c.tz,
         correct_points: c.correct_points,
+        second_try_points: c.second_try_points,
         streak_bonuses: c.streak_bonuses.map((b) => ({ ...b })),
         complete_bonus: c.complete_bonus,
       };
@@ -882,6 +923,7 @@ export async function adventOrganizerPage(adminToken, ui) {
     view.draft = {
       tz: f.querySelector('#set-tz').value,
       correct_points: num(f.querySelector('#set-correct')),
+      second_try_points: num(f.querySelector('#set-second')),
       complete_bonus: num(f.querySelector('#set-complete')),
       streak_bonuses: [...f.querySelectorAll('.bonus-row')].map((r) => ({
         days: num(r.querySelector('[data-bdays]')),
@@ -893,7 +935,7 @@ export async function adventOrganizerPage(adminToken, ui) {
   function summaryHtml(d) {
     const maxBonus = d.streak_bonuses.reduce((a, b) => a + (Number(b.points) || 0), 0) + (Number(d.complete_bonus) || 0);
     const correct = Number(d.correct_points) || 0;
-    return `<p class="set-summary">Viena pareiza atbilde: <b>${punkti(correct)}</b> · Visi bonusi kopā: <b>${punkti(maxBonus)}</b></p>${
+    return `<p class="set-summary">Pareizi ar 1. mēģinājumu: <b>${punkti(correct)}</b> · ar 2. mēģinājumu: <b>${punkti(Number(d.second_try_points) || 0)}</b> · Visi bonusi kopā: <b>${punkti(maxBonus)}</b></p>${
       maxBonus > correct * 2
         ? '<p class="adv-warn">Bonusi kopā ir vairāk nekā divas pareizas atbildes — tad sērija var ietekmēt uzvarētāju vairāk nekā minēšana.</p>'
         : ''
@@ -932,8 +974,14 @@ export async function adventOrganizerPage(adminToken, ui) {
           </div>
 
           <div class="set-field">
-            <label for="set-correct">Punkti par pareizu atbildi</label>
+            <label for="set-correct">Punkti par pareizu atbildi ar 1. mēģinājumu</label>
             <input id="set-correct" type="number" inputmode="numeric" min="1" max="100" value="${esc(d.correct_points)}">
+          </div>
+
+          <div class="set-field">
+            <label for="set-second">Punkti par pareizu atbildi ar 2. mēģinājumu</label>
+            <input id="set-second" type="number" inputmode="numeric" min="0" max="100" value="${esc(d.second_try_points)}">
+            <span class="muted small">Ja pirmais minējums ir nepareizs, var minēt vēlreiz — par to mazāk punktu.</span>
           </div>
 
           <div class="set-field">
@@ -1093,6 +1141,7 @@ export async function adventOrganizerPage(adminToken, ui) {
           adminToken,
           d.tz,
           Number(d.correct_points),
+          Number(d.second_try_points),
           d.streak_bonuses.map((b) => ({ days: Number(b.days), points: Number(b.points) })),
           Number(d.complete_bonus),
         );

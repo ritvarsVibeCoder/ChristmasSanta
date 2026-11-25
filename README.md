@@ -25,7 +25,7 @@ Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
   Days that have already opened can't be changed.
 - **Calendar:** one door per day, opening at 00:00 Latvian time (`Europe/Riga`). Missed days can be opened
   later. One guess per memory (enforced by a unique constraint); the author is revealed right after guessing.
-- **Points:** correct guess +7. Streak bonuses for guessing on the day itself: 3 days +1, 5 days +1,
+- **Points:** correct on the 1st attempt +7, on the 2nd attempt +4. Streak bonuses for guessing on the day itself: 3 days +1, 5 days +1,
   7 days +2, 14 days +2, all 24 days +3. Late guesses earn the 7 points but don't count for streaks;
   your own memory's day is neutral. Earned bonuses are never removed.
 - **Finale:** standings, winner badge and ties are only revealed from 24 December. Guessing closes after the 24th.

@@ -155,7 +155,7 @@ const CAL_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" st
 const adventEntry = (token) => `
   <a class="advent-entry" href="#/s/${esc(token)}/advent">
     <span class="ae-ico">${CAL_ICON}</span>
-    <span class="ae-text"><strong>Adventes kalendārs</strong><span class="ae-sub">Ģimenes atmiņu spēle — atver durvis katru dienu</span></span>
+    <span class="ae-text"><strong>Adventes kalendārs</strong><span class="ae-sub">Ģimenes atmiņu spēle ar punktiem — uzvarētājam balviņa!</span></span>
     <span class="ae-go" aria-hidden="true">›</span>
   </a>`;
 
@@ -165,7 +165,7 @@ const PEN_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" st
 const memoriesEntry = (token) => `
   <a class="advent-entry memories" href="#/s/${esc(token)}/advent/atminas">
     <span class="ae-ico">${PEN_ICON}</span>
-    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Uzraksti siltu vai smieklīgu atmiņu par kādu ģimenes locekli — decembrī tā kļūs par mīklu adventes kalendārā.</span></span>
+    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Mums ir arī adventes kalendārs! Līdz 1. decembrim uzraksti dažas atmiņas, decembrī min, kurš tās uzrakstījis, un krāj punktus. Kurš savāks visvairāk punktu, saņems balviņu!</span></span>
     <span class="ae-go" aria-hidden="true">›</span>
   </a>
   ${adventEntry(token)}`;
