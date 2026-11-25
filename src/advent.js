@@ -178,6 +178,33 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     return `Šodien ir <strong>${decDate(st.today)}</strong>. Atver šodienas durvis un uzmini, kurš no ģimenes ir dalījies ar šo atmiņu!`;
   }
 
+  // Red banner with the person's own Secret Santa match - only after they've scratched their card.
+  function santaBanner() {
+    const sb = st.santa;
+    if (!sb) return '';
+    const budgetText = sb.budget_min === sb.budget_max ? `€${sb.budget_min}` : `€${sb.budget_min}–€${sb.budget_max}`;
+    if (sb.revealed && sb.receiver_name) {
+      return `
+        <a class="santa-banner" href="#/s/${esc(token)}" aria-label="Tu gādā dāvanu: ${esc(sb.receiver_name)}. Atvērt biļeti">
+          <span class="sb-ico">${icons.gift(26)}</span>
+          <span class="sb-text">
+            <span class="sb-k">Tu gādā dāvanu</span>
+            <strong class="sb-name">${esc(sb.receiver_name)}</strong>
+            <span class="sb-sub">Dāvanas budžets ${budgetText} · glabā noslēpumu!</span>
+          </span>
+        </a>`;
+    }
+    return `
+      <a class="santa-banner pending" href="#/s/${esc(token)}">
+        <span class="sb-ico">${icons.gift(26)}</span>
+        <span class="sb-text">
+          <span class="sb-k">Tavs slepenais rūķītis vēl gaida!</span>
+          <strong class="sb-name small">Nokasi biļeti, lai uzzinātu, kam gādāsi dāvanu</strong>
+        </span>
+        <span class="sb-go" aria-hidden="true">›</span>
+      </a>`;
+  }
+
   function scoreCard() {
     const s = st.score || { total: 0, correct_count: 0, correct_points: 0, bonus_points: 0, streak: 0 };
     const nm = nextMilestone(s, st.config);
@@ -369,6 +396,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
             <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz slepeno rūķīti">${icons.back()}</a>
             <span class="brand">${icons.star(28)}<span>Adventes kalendārs</span></span>
           </header>
+          ${santaBanner()}
           <section class="hero adv-hero">
             <span class="eyebrow">${esc(st.event_name)}</span>
             <h1>Priecīgu adventi, <em>${esc(vocative(st.my_name))}!</em></h1>

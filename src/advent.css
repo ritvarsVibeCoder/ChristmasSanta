@@ -362,3 +362,19 @@ body.no-scroll { overflow: hidden; }
 .adv-result.retry { background: #fbeccb; color: #5c3b06; }
 .adv-result.retry .adv-result-ico { background: #c97a12; font-family: var(--serif); font-size: 26px; font-weight: 700; }
 
+
+/* own Secret Santa match on Advent pages */
+.santa-banner {
+  display: flex; align-items: center; gap: 14px; margin: 18px 8px 0; padding: 14px 16px;
+  background: var(--red); color: var(--cream); text-decoration: none;
+  border-radius: 6px; border: 2px solid var(--gold);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+.santa-banner:hover { background: #d83246; color: var(--cream); }
+.santa-banner .sb-ico { flex: none; width: 46px; height: 46px; border-radius: 4px; display: grid; place-items: center; background: var(--gold); color: var(--ink); }
+.santa-banner .sb-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.santa-banner .sb-k { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #fde3e3; }
+.santa-banner .sb-name { font-family: var(--serif); font-size: 26px; line-height: 1.15; overflow-wrap: anywhere; }
+.santa-banner .sb-name.small { font-size: 17px; }
+.santa-banner .sb-sub { font-size: 13px; color: #fde3e3; }
+.santa-banner .sb-go { margin-left: auto; font-size: 24px; color: var(--gold-light); }
