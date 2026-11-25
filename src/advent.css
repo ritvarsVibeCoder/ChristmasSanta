@@ -492,3 +492,10 @@ body.no-scroll { overflow: hidden; }
 .adv-cta-btn span:last-child { font-size: 24px; color: var(--gold-light); }
 .adv-cta-btn svg { color: var(--gold-light); }
 .adv-cta-btn:hover { background: #d83246; color: var(--cream); }
+
+/* highlighted key words (gold "marker" chip) */
+.hl {
+  display: inline-block; padding: 1px 9px; margin: 0 1px; border-radius: 8px;
+  background: var(--gold); color: var(--ink); font-weight: 800; line-height: 1.35;
+  box-shadow: 0 2px 0 var(--red-dark);
+}
