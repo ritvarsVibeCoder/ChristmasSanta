@@ -399,7 +399,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
           ${santaBanner()}
           <section class="hero adv-hero">
             <span class="eyebrow">${esc(st.event_name)}</span>
-            <h1>Priecīgu adventi, <em>${esc(vocative(st.my_name))}!</em></h1>
+            <h1>Priecīgus Ziemassvētkus, <em>${esc(vocative(st.my_name))}!</em></h1>
             <p class="lede">${intro()}</p>
           </section>
           <nav class="adv-tabs" aria-label="Sadaļas">
