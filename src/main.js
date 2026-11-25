@@ -119,17 +119,47 @@ function errorPage(title, message) {
 
 let cleanup = null;
 
+// The pages you have walked through, in order. The back arrow returns along this
+// path (like the browser's back button), so you retrace your steps to the main page.
+// If a page was opened directly from a link, the arrow goes to its logical parent.
+const navStack = [location.hash || '#/'];
+
+function trackNav() {
+  const h = location.hash || '#/';
+  if (navStack.length > 1 && navStack[navStack.length - 2] === h) navStack.pop();
+  else if (navStack[navStack.length - 1] !== h) navStack.push(h);
+}
+
+// Go to a page without leaving the current one in the history (e.g. after saving a form).
+function navReplace(hash) {
+  navStack[navStack.length - 1] = hash;
+  location.replace(hash);
+}
+
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-back]');
+  if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault();
+  if (navStack.length > 1) history.back();
+  else navReplace(a.getAttribute('href'));
+});
+
+const ADVENT_VIEWS = { '': 'calendar', noteikumi: 'rules', atminas: 'memories', rakstit: 'write', saglabatas: 'saved', finals: 'finale' };
+
 function route() {
   if (cleanup) {
     cleanup();
     cleanup = null;
   }
+  trackNav();
   window.scrollTo(0, 0);
   const hash = location.hash.replace(/^#/, '');
-  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent(\/(atminas|saglabatas))?)?$/);
+  const m = hash.match(/^\/(o|s)\/([A-Za-z0-9_-]{8,64})(\/advent(?:\/(noteikumi|atminas|saglabatas|finals|rakstit\/(\d{1,4})))?)?$/);
   if (m && m[3] && m[1] === 'o') return adventOrganizerPage(m[2], adventUi());
-  if (m && m[3] && m[1] === 's')
-    return adventParticipantPage(m[2], adventUi(), m[5] === 'atminas' ? 'memories' : m[5] === 'saglabatas' ? 'saved' : 'calendar');
+  if (m && m[3] && m[1] === 's') {
+    const sub = (m[4] || '').split('/')[0];
+    return adventParticipantPage(m[2], adventUi(), ADVENT_VIEWS[sub], m[5] ? Number(m[5]) : null);
+  }
   if (m && m[1] === 'o') return organizerPage(m[2]);
   if (m && m[1] === 's') return participantPage(m[2]);
   return homePage();
@@ -145,6 +175,7 @@ function adventUi() {
     loading,
     errorPage,
     burstConfetti,
+    navReplace,
     setCleanup: (fn) => {
       cleanup = fn;
     },
@@ -152,24 +183,6 @@ function adventUi() {
 }
 
 const CAL_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`;
-
-const adventEntry = (token) => `
-  <a class="advent-entry" href="#/s/${esc(token)}/advent">
-    <span class="ae-ico">${CAL_ICON}</span>
-    <span class="ae-text"><strong>Adventes kalendārs</strong><span class="ae-sub">Ģimenes atmiņu spēle ar punktiem — uzvarētājam balviņa!</span></span>
-    <span class="ae-go" aria-hidden="true">›</span>
-  </a>`;
-
-const PEN_ICON = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
-
-// Shown after the reveal: invite people to share memories for the Advent calendar.
-const memoriesEntry = (token) => `
-  <a class="advent-entry memories" href="#/s/${esc(token)}/advent/atminas">
-    <span class="ae-ico">${PEN_ICON}</span>
-    <span class="ae-text"><strong>Tagad padalies ar atmiņām!</strong><span class="ae-sub">Mums ir arī adventes kalendārs! Līdz 1. decembrim uzraksti dažas atmiņas, decembrī min, kurš tās uzrakstījis, un krāj punktus. Kurš savāks visvairāk punktu, saņems balviņu!</span></span>
-    <span class="ae-go" aria-hidden="true">›</span>
-  </a>
-  ${adventEntry(token)}`;
 
 window.addEventListener('hashchange', route);
 
@@ -581,14 +594,6 @@ async function participantPage(token) {
   renderScratch(token, card);
 }
 
-function infoTiles(card) {
-  return `
-    <div class="tiles">
-      <div class="tile"><span class="muted-label">Budžets</span><span class="tile-num">${budget(card.budget_min, card.budget_max)}</span></div>
-      <div class="tile"><span class="muted-label">Dalībnieki</span><span class="tile-num">${cilveki(card.participant_count)}</span></div>
-    </div>`;
-}
-
 function renderScratch(token, card) {
   app.innerHTML = `
     <div class="page page-card">
@@ -603,7 +608,7 @@ function renderScratch(token, card) {
             <span class="touch-only">Nokasi to ar pirkstu, lai redzētu, kam tu gādāsi dāvanu!</span>
             <span class="mouse-only">Nokasi to ar peli, lai redzētu, kam tu gādāsi dāvanu!</span>
           </p>
-          <div class="desktop-only">${infoTiles(card)}</div>
+          <span class="pill">${icons.gift(16)}Budžets ${budget(card.budget_min, card.budget_max)}</span>
         </section>
 
         <div class="scratch-col">
@@ -622,10 +627,7 @@ function renderScratch(token, card) {
             <button type="button" class="link-btn" id="revealbtn">atklāj uzreiz</button>
           </p>
           <div class="form-error" id="carderr" role="alert" hidden></div>
-          ${adventEntry(token)}
         </div>
-
-        <div class="mobile-only">${infoTiles(card)}</div>
       </div>
     </div>`;
 
@@ -675,44 +677,28 @@ function renderScratch(token, card) {
 
 function renderRevealed(card, celebrate, token) {
   window.getSelection?.().removeAllRanges();
+  const T = `#/s/${esc(token)}`;
   app.innerHTML = `
     <div class="page page-card page-revealed">
       ${celebrate ? '<div class="confetti" aria-hidden="true"></div>' : ''}
+      ${garland()}
       ${flakes()}
-      <div class="wrap card-grid">
-        <section class="hero hero-card">
-          ${icons.star(40)}
-          <span class="eyebrow mobile-only">${esc(vocative(card.my_name))}, tavs dāvanas saņēmējs ir</span>
-          <h1 class="sr-only mobile-only">Tu gādā dāvanu: ${esc(card.receiver_name)}</h1>
-          <div class="desktop-only hero-stack">
-            <span class="eyebrow">${esc(card.event_name)}</span>
-            <h1>Priecīgus Ziemassvētkus, <em>${esc(vocative(card.my_name))}!</em></h1>
-            <p class="lede">Tu esi slepenais rūķītis, un tavs dāvanas saņēmējs ir <strong>${esc(card.receiver_name)}</strong>. Izvēlies kaut ko jauku par ${budget(card.budget_min, card.budget_max)} un glabā noslēpumu līdz dāvanu atvēršanai!</p>
-          </div>
+      <div class="wrap main-card">
+        <section class="mc-head">
+          <h1>Ho, ho, ho!</h1>
+          <p class="mc-sub">${esc(vocative(card.my_name))}, tu gādā dāvanu:</p>
         </section>
-
-        <div class="scratch-col">
-          <div class="ticket">
-            <div class="ticket-inner revealed">
-              <span class="under-name big">${esc(card.receiver_name)}</span>
-              <span class="pill">${icons.gift(16)}Dāvanas budžets ${budget(card.budget_min, card.budget_max)}</span>
-            </div>
-          </div>
-          ${memoriesEntry(token)}
-        </div>
-
-        <div class="tips">
-          <div class="tip">
-            ${icons.lock()}
-            <div><strong>Glabā noslēpumu</strong><span>To redzi tikai tu. Nestāsti to nevienam — it sevišķi ne pašam dāvanas saņēmējam!</span></div>
-          </div>
-          <div class="tip">
-            ${icons.link(22)}
-            <div><strong>Atgriezies jebkurā laikā</strong><span>Ja aizmirsti, atver savu saiti vēlreiz — rezultāts nemainīsies.</span></div>
+        <div class="ticket">
+          <div class="ticket-inner revealed">
+            <span class="under-name big">${esc(card.receiver_name)}</span>
+            <span class="pill">${icons.gift(16)}Budžets ${budget(card.budget_min, card.budget_max)}</span>
           </div>
         </div>
-
-        <p class="merry">Priecīgus Ziemassvētkus!</p>
+        <nav class="mc-actions" aria-label="Adventes kalendārs">
+          <a class="mc-btn gold" href="${T}/advent"><span>Adventes kalendārs</span><span aria-hidden="true">›</span></a>
+          <a class="mc-btn red" href="${T}/advent/atminas"><span>Rakstīt atmiņas</span><span aria-hidden="true">›</span></a>
+          <a class="mc-link" href="${T}/advent/noteikumi">Kā tas strādā?</a>
+        </nav>
       </div>
     </div>`;
 

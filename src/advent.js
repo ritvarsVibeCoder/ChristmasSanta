@@ -15,14 +15,6 @@ const punkti = (n) => `${n} ${lvPlural(n, 'punkts', 'punkti')}`;
 const decDate = (d) => `${d}. decembris`;
 // Accusative: "saņemsi 7 punktus", "saņemsi 1 punktu".
 const punktusAcc = (n) => `${n} ${lvPlural(n, 'punktu', 'punktus')}`;
-// Latvian vocative for addressing someone by name: Jānis → Jāni, Edgars → Edgar,
-// Mārtiņš → Mārtiņ; names ending in a vowel (Anna, Līga, Agnese) stay the same.
-const vocative = (name) => {
-  const t = String(name ?? '').trim();
-  if (/[a-zāēīūčšžģķļņ]s$/i.test(t) && !/ss$/i.test(t) && t.length > 2) return t.slice(0, -1);
-  if (/š$/i.test(t) && t.length > 2) return t.slice(0, -1);
-  return t;
-};
 
 const TIMEZONES = [
   ['Europe/Riga', 'Latvija (Rīga)'],
@@ -56,33 +48,6 @@ const DEFAULT_SETTINGS = {
   complete_bonus: 3,
   second_try_points: 4,
 };
-
-// "How points work" list, shown with the memories and in the game rules.
-function pointsList(cfg) {
-  const b = cfg.streak_bonuses.map((x) => `${dienas(x.days)} pēc kārtas — +${x.points}`).join(' · ');
-  return `<ul class="adv-points">
-      <li><b>+${cfg.correct_points}</b><span>pareizi ar 1. mēģinājumu</span></li>
-      <li><b>+${cfg.second_try_points}</b><span>pareizi ar 2. mēģinājumu</span></li>
-      ${b ? `<li><b>+</b><span>sērijas bonusi, ja min tieši tajā pašā dienā: ${b}</span></li>` : ''}
-      ${cfg.complete_bonus ? `<li><b>+${cfg.complete_bonus}</b><span>ja nenokavē nevienu dienu</span></li>` : ''}
-    </ul>`;
-}
-
-function whyBox(cfg, withButton) {
-  return `
-    <section class="adv-why" aria-labelledby="why-h">
-      <h2 id="why-h">Kāpēc rakstīt atmiņas?</h2>
-      <ol class="adv-steps">
-        <li><b>Līdz 1. decembrim</b> uzraksti dažas atmiņas — par sevi vai kādu no ģimenes.</li>
-        <li><b>No 1. līdz 24. decembrim</b> adventes kalendārā katru dienu atveras viena atmiņa. Uzmini, kurš to uzrakstījis!</li>
-        <li><b>Krāj punktus!</b> Kurš savāks visvairāk punktu, Ziemassvētku vakarā saņems <b>balviņu</b>.</li>
-      </ol>
-      <h3>Kā skaita punktus</h3>
-      ${pointsList(cfg)}
-      <p class="adv-why-foot">Katrai atmiņai ir 2 mēģinājumi — vienkārši pieskaries vārdam. Kopvērtējumu atklāsim 24. decembrī.</p>
-      ${withButton ? '<button type="button" class="btn btn-gold" data-tab="memories">Rakstīt atmiņu</button>' : ''}
-    </section>`;
-}
 
 const advIcons = {
   lock: (s = 18) =>
@@ -130,19 +95,11 @@ const lights = () => {
     <path d="M0 8 Q 196 50 392 8" fill="none" stroke="#2c4a3d" stroke-width="2"/>${bulbs}</svg>`;
 };
 
-function nextMilestone(score, cfg) {
-  if (!score || !cfg) return null;
-  const awarded = new Set((score.milestones || []).filter((m) => m.kind === 'streak').map((m) => m.days));
-  const next = [...cfg.streak_bonuses].sort((a, b) => a.days - b.days).find((b) => !awarded.has(b.days));
-  if (!next) return null;
-  return { left: Math.max(1, next.days - score.streak), points: next.points, days: next.days };
-}
-
 // ======================================================================
 // Participant
 // ======================================================================
 
-export async function adventParticipantPage(token, ui, initialTab = 'calendar') {
+export async function adventParticipantPage(token, ui, initialTab = 'calendar', qid = null) {
   const { app, esc, toast, flakes, loading, errorPage, setCleanup, burstConfetti } = ui;
   loading('Atveram adventes kalendāru…');
 
@@ -153,7 +110,7 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     return errorPage('Saite nav atrasta', 'Šī saite nedarbojas. Palūdz organizatoram to atsūtīt vēlreiz.');
   }
 
-  const view = { tab: initialTab, memories: null, openQuestion: null, editingId: null, finale: null, sheetDay: null };
+  const view = { tab: initialTab, qid, memories: null, editingId: null, finale: null, sheetDay: null };
   let alive = true;
   let pendingRender = false;
 
@@ -168,66 +125,47 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
     }
   }
 
-  function intro() {
-    if (st.today < 1) {
-      const left = 1 - st.today;
-      return `Kalendārs atvērsies <strong>1. decembrī</strong> — vēl ${dienas(left)}. Līdz tam uzraksti dažas savas atmiņas!`;
-    }
-    if (st.today > 24) return 'Adventes laiks ir galā. Paldies, ka piedalījies! Rezultātus vari apskatīt finālā.';
-    if (st.today === 24) return 'Ziemassvētku vakars! Atver pēdējās durvis un apskaties finālu.';
-    return `Šodien ir <strong>${decDate(st.today)}</strong>. Atver šodienas durvis un uzmini, kurš no ģimenes ir dalījies ar šo atmiņu!`;
+  // ----- pages (one thing per page) -----
+  // Each page has its own address, so the back arrow can follow the order you came in.
+
+  const T = `#/s/${esc(token)}`;
+  const pageHref = {
+    card: T,
+    calendar: `${T}/advent`,
+    rules: `${T}/advent/noteikumi`,
+    memories: `${T}/advent/atminas`,
+    saved: `${T}/advent/saglabatas`,
+    finale: `${T}/advent/finals`,
+  };
+  // Where the back arrow goes if the page was opened straight from a link (no history yet).
+  const parentOf = { calendar: 'card', rules: 'calendar', memories: 'card', write: 'memories', saved: 'memories', finale: 'calendar' };
+
+  function shell(title, body) {
+    const back = pageHref[parentOf[view.tab]] || T;
+    return `
+      <div class="page page-advent">
+        ${lights()}
+        ${flakes()}
+        <div class="wrap adv-wrap">
+          <header class="topbar adv-top">
+            <a class="icon-btn back" href="${back}" data-back aria-label="Atpakaļ">${icons.back()}</a>
+            <h1 class="adv-title">${title}</h1>
+          </header>
+          <div class="adv-body">${body}</div>
+        </div>
+        <div class="sheet-backdrop" hidden></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h" hidden></div>
+      </div>`;
   }
 
-  // Red banner with the person's own Secret Santa match - only after they've scratched their card.
-  function santaBanner() {
+  // Small red box: who you're buying a gift for (only after the card is scratched).
+  function santaStrip() {
     const sb = st.santa;
     if (!sb) return '';
-    const budgetText = sb.budget_min === sb.budget_max ? `€${sb.budget_min}` : `€${sb.budget_min}–€${sb.budget_max}`;
     if (sb.revealed && sb.receiver_name) {
-      return `
-        <a class="santa-banner" href="#/s/${esc(token)}" aria-label="Tu gādā dāvanu: ${esc(sb.receiver_name)}. Atvērt biļeti">
-          <span class="sb-ico">${icons.gift(26)}</span>
-          <span class="sb-text">
-            <span class="sb-k">Tu gādā dāvanu</span>
-            <strong class="sb-name">${esc(sb.receiver_name)}</strong>
-            <span class="sb-sub">Dāvanas budžets ${budgetText} · glabā noslēpumu!</span>
-          </span>
-        </a>`;
+      return `<div class="santa-strip"><span class="ss-k">Tu gādā dāvanu</span><strong>${esc(sb.receiver_name)}</strong></div>`;
     }
-    return `
-      <a class="santa-banner pending" href="#/s/${esc(token)}">
-        <span class="sb-ico">${icons.gift(26)}</span>
-        <span class="sb-text">
-          <span class="sb-k">Tavs slepenais rūķītis vēl gaida!</span>
-          <strong class="sb-name small">Nokasi biļeti, lai uzzinātu, kam gādāsi dāvanu</strong>
-        </span>
-        <span class="sb-go" aria-hidden="true">›</span>
-      </a>`;
-  }
-
-  function scoreCard() {
-    const s = st.score || { total: 0, correct_count: 0, correct_points: 0, bonus_points: 0, streak: 0 };
-    const nm = nextMilestone(s, st.config);
-    return `
-      <section class="adv-score" aria-label="Mani punkti">
-        <div class="adv-score-main">
-          <span class="adv-score-label">Mani punkti</span>
-          <span class="adv-score-num">${s.total}</span>
-        </div>
-        <div class="adv-score-grid">
-          <div><span class="adv-k">Uzminētas</span><span class="adv-v">${s.correct_count} · +${s.correct_points}</span></div>
-          <div><span class="adv-k">Bonusi</span><span class="adv-v">+${s.bonus_points}</span></div>
-          <div><span class="adv-k">Sērija</span><span class="adv-v adv-streak">${advIcons.fire()}${s.streak}</span></div>
-        </div>
-        ${
-          nm && st.today >= 1 && nm.left <= 24 - st.today + 1
-            ? `<p class="adv-hint">Mini vēl ${dienas(nm.left)} pēc kārtas un saņemsi <strong>+${punktusAcc(nm.points)}</strong> bonusā!</p>`
-            : ''
-        }
-        <p class="adv-hint muted">${
-          st.finale ? 'Kopvērtējums ir atklāts — apskaties sadaļu „Fināls”!' : 'Citu punkti un kopvērtējums tiks atklāti 24. decembrī.'
-        }</p>
-      </section>`;
+    return `<a class="santa-strip pending" href="${T}"><span class="ss-k">Slepenais rūķītis</span><strong>Nokasi biļeti ›</strong></a>`;
   }
 
   function doorHtml(d) {
@@ -266,193 +204,136 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       </button>`;
   }
 
-  function calendarTab() {
+  function calendarView() {
+    const total = st.score ? st.score.total : 0;
+    let notice = '';
+    if (st.today < 1) {
+      notice = `<a class="adv-notice" href="${pageHref.memories}"><span>Kalendārs atvērsies <b>1. decembrī</b>. Līdz tam uzraksti atmiņas!</span><span aria-hidden="true">›</span></a>`;
+    } else if (st.finale) {
+      notice = `<a class="adv-notice gold" href="${pageHref.finale}"><span><b>Fināls!</b> Apskati, kurš uzvarēja</span><span aria-hidden="true">›</span></a>`;
+    }
     return `
-      ${st.today >= 1 ? scoreCard() : whyBox(st.config, true)}
+      <div class="adv-minirow">
+        ${santaStrip()}
+        <div class="points-box"><span class="ss-k">Punkti</span><strong>${total}</strong></div>
+      </div>
+      ${notice}
       <section class="adv-cal" aria-label="Adventes kalendārs">
         <div class="adv-cal-grid">${st.days.map(doorHtml).join('')}</div>
-        <div class="adv-legend">
-          <span><i class="lg lg-open"></i>Jāmin</span>
-          <span><i class="lg lg-correct"></i>Pareizi</span>
-          <span><i class="lg lg-retry"></i>Vēl 1 mēģinājums</span>
-          <span><i class="lg lg-wrong"></i>Nepareizi</span>
-          <span><i class="lg lg-own"></i>Tava atmiņa</span>
-        </div>
-        <p class="adv-note">Durvis atveras katru dienu plkst. 00:00 ${tzLabel(st.config.tz)}. Nokavētās dienas vari atvērt arī vēlāk.</p>
       </section>
-      ${rulesCard()}`;
+      <a class="adv-more" href="${pageHref.rules}">Kā spēlēt? ›</a>`;
   }
 
-  function rulesCard() {
+  function rulesView() {
+    const c = st.config;
+    const extras = [...c.streak_bonuses.map((b) => b.points), ...(c.complete_bonus ? [c.complete_bonus] : [])];
+    const lo = extras.length ? Math.min(...extras) : 0;
+    const hi = extras.length ? Math.max(...extras) : 0;
     return `
-      <details class="adv-rules">
-        <summary>Kā spēlēt?</summary>
-        <ul>
-          <li>Katru dienu atveras jaunas durvis ar kāda ģimenes locekļa atmiņu.</li>
-          <li>Pieskaries vārdam, kurš, tavuprāt, to uzrakstīja. Tev ir <strong>2 mēģinājumi</strong>; iesniegtu minējumu mainīt nevar.</li>
-          <li>Punkti:${pointsList(st.config)}</li>
-          <li>Nokavētās dienas vari minēt vēlāk — punkti skaitās, bet sērija neatjaunojas.</li>
-          <li>Ja durvīs ir tava atmiņa, tev nav jāmin, un sērija nepārtrūkst.</li>
-          <li>Uzvarētāju atklāsim 24. decembrī, Ziemassvētku vakarā!</li>
-        </ul>
-      </details>`;
+      <ol class="rules-steps">
+        <li><span class="rs-n">1</span><span>Līdz <b>1. decembrim</b> uzraksti atmiņas.</span></li>
+        <li><span class="rs-n">2</span><span>Katru dienu atver durvis un <b>uzmini, kurš rakstīja</b>. Tev ir 2 mēģinājumi.</span></li>
+        <li><span class="rs-n">3</span><span>Krāj punktus — uzvarētājam <b>balviņa</b>!</span></li>
+      </ol>
+      <div class="rules-points">
+        <span class="rp-h">Punkti</span>
+        <div><span>Pareizi ar 1. reizi</span><b>+${c.correct_points}</b></div>
+        <div><span>Pareizi ar 2. reizi</span><b>+${c.second_try_points}</b></div>
+        ${extras.length ? `<div><span>Min vairākas dienas pēc kārtas</span><b>+${lo === hi ? lo : `${lo}…${hi}`}</b></div>` : ''}
+      </div>
+      <p class="rules-foot">Durvis atveras katru dienu plkst. 00:00 ${tzLabel(c.tz)}. Kopvērtējumu atklāsim 24. decembrī.</p>
+      <a class="btn btn-gold btn-big" href="${pageHref.calendar}" data-back>Sapratu</a>`;
   }
 
-  // ----- memories tab -----
-
-  const statusLabel = { pending: 'Saglabāta', approved: 'Saglabāta', rejected: 'Netiks izmantota' };
-
-  function memoriesTab() {
-    if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
-    const mine = view.memories;
+  function memoriesView() {
+    const count = view.memories ? view.memories.length : 0;
     return `
-      <p class="adv-fill-hint">Izvēlies jautājumu un uzraksti atmiņu. Tikai <strong>neatklāj savu vārdu</strong>!</p>
-
-      <section class="adv-questions" aria-label="Jautājumi">
+      ${santaStrip()}
+      <nav class="q-list" aria-label="Jautājumi">
         ${st.questions
-          .map((q) =>
-            view.openQuestion === q.id
-              ? `<form class="adv-q open" data-qform="${q.id}">
-                   <label for="mem-new-${q.id}" class="adv-q-title">${esc(q.prompt)}</label>
-                   <textarea id="mem-new-${q.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences" placeholder="Reiz, kad biju mazs…"></textarea>
-                   <div class="adv-row">
-                     <button type="submit" class="btn btn-red btn-sm">Saglabāt atmiņu</button>
-                     <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
-                   </div>
-                 </form>`
-              : `<button type="button" class="adv-q" data-q="${q.id}">
-                   <span class="adv-q-title">${esc(q.prompt)}</span>
-                   <span class="adv-q-cta">${advIcons.pen()}Rakstīt</span>
-                 </button>`,
-          )
+          .map((q) => `<a class="q-item" href="${T}/advent/rakstit/${q.id}"><span>${esc(q.title)}</span><span aria-hidden="true">›</span></a>`)
           .join('')}
-      </section>
-
-      <a class="adv-saved-link" href="#/s/${esc(token)}/advent/saglabatas">
-        <span>${advIcons.pen()}<b>Tavas atmiņas</b> (${mine.length})</span>
+      </nav>
+      <a class="adv-saved-link" href="${pageHref.saved}">
+        <span>${advIcons.pen()}<b>Tavas atmiņas</b> (${count})</span>
         <span aria-hidden="true">›</span>
       </a>`;
   }
 
-  // Next page: the memories this person has saved.
-  function savedListHtml() {
-    if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
-    const mine = view.memories;
+  function writeView() {
+    const q = st.questions.find((x) => x.id === view.qid);
+    if (!q) return `<p class="muted">Šāds jautājums nav atrasts.</p><a class="btn btn-gold" href="${pageHref.memories}">Uz jautājumiem</a>`;
     return `
-      <section class="adv-panel" aria-labelledby="my-mem-h">
-        <h2 id="my-mem-h">Saglabātās atmiņas (${mine.length})</h2>
-        ${
-          mine.length
-            ? `<ul class="adv-mylist">${mine
-                .map((m) =>
-                  view.editingId === m.id
-                    ? `<li class="adv-mem editing">
-                         <form data-editform="${m.id}" data-qid="${m.question_id}">
-                           <label class="adv-mem-title" for="mem-edit-${m.id}">${esc(m.title)}</label>
-                           <textarea id="mem-edit-${m.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences">${esc(m.body)}</textarea>
-                           <div class="adv-row">
-                             <button type="submit" class="btn btn-red btn-sm">Saglabāt</button>
-                             <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
-                           </div>
-                         </form>
-                       </li>`
-                    : `<li class="adv-mem">
-                         <div class="adv-mem-head">
-                           <span class="adv-mem-title">${esc(m.title)}</span>
-                           <span class="adv-status st-${m.status}">${statusLabel[m.status]}</span>
-                         </div>
-                         <p class="adv-mem-body">${esc(m.body)}</p>
-                         ${
-                           m.editable
-                             ? `<div class="adv-row">
-                                  <button type="button" class="btn btn-sm btn-outline-dark" data-edit="${m.id}">${advIcons.pen()}Labot</button>
-                                  <button type="button" class="btn btn-sm btn-plain" data-del="${m.id}">${advIcons.trash()}Dzēst</button>
-                                </div>`
-                             : ''
-                         }
-                       </li>`,
-                )
-                .join('')}</ul>`
-            : '<p class="muted">Tev vēl nav nevienas atmiņas.</p>'
-        }
-      </section>`;
+      <form class="write-form" data-qform="${q.id}">
+        <label for="mem-new" class="write-q">${esc(q.prompt)}</label>
+        <textarea id="mem-new" rows="9" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences" placeholder="Reiz, kad biju mazs…"></textarea>
+        <p class="write-hint">Neatklāj savu vārdu — citi minēs!</p>
+        <button type="submit" class="btn btn-red btn-big">Saglabāt</button>
+      </form>`;
   }
 
-  // ----- finale -----
+  const statusLabel = { pending: 'Saglabāta', approved: 'Saglabāta', rejected: 'Netiks izmantota' };
 
-  function finaleTab() {
+  function savedView() {
+    if (!view.memories) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
+    const mine = view.memories;
+    const list = mine.length
+      ? `<ul class="adv-mylist">${mine
+          .map((m) =>
+            view.editingId === m.id
+              ? `<li class="adv-mem editing">
+                   <form data-editform="${m.id}" data-qid="${m.question_id}">
+                     <label class="adv-mem-title" for="mem-edit-${m.id}">${esc(m.title)}</label>
+                     <textarea id="mem-edit-${m.id}" rows="5" maxlength="2000" lang="lv" spellcheck="true" autocapitalize="sentences">${esc(m.body)}</textarea>
+                     <div class="adv-row">
+                       <button type="submit" class="btn btn-red btn-sm">Saglabāt</button>
+                       <button type="button" class="btn btn-sm btn-plain" data-cancel>Atcelt</button>
+                     </div>
+                   </form>
+                 </li>`
+              : `<li class="adv-mem">
+                   <div class="adv-mem-head">
+                     <span class="adv-mem-title">${esc(m.title)}</span>
+                     <span class="adv-status st-${m.status}">${statusLabel[m.status]}</span>
+                   </div>
+                   <p class="adv-mem-body">${esc(m.body)}</p>
+                   ${
+                     m.editable
+                       ? `<div class="adv-row">
+                            <button type="button" class="btn btn-sm btn-outline-dark" data-edit="${m.id}">${advIcons.pen()}Labot</button>
+                            <button type="button" class="btn btn-sm btn-plain" data-del="${m.id}">${advIcons.trash()}Dzēst</button>
+                          </div>`
+                       : ''
+                   }
+                 </li>`,
+          )
+          .join('')}</ul>`
+      : '<p class="muted">Tev vēl nav nevienas atmiņas.</p>';
+    return `
+      <p class="adv-fill-hint">Kamēr atmiņas diena kalendārā nav atvērusies, vari to labot vai izdzēst.</p>
+      <section class="adv-panel">${list}</section>
+      <div class="adv-saved-actions">
+        <a class="btn btn-gold btn-big" href="${pageHref.memories}">${icons.plus()}Uzrakstīt vēl vienu atmiņu</a>
+        <a class="btn btn-outline" href="${pageHref.calendar}">${advIcons.calendar(18)}Uz adventes kalendāru</a>
+      </div>`;
+  }
+
+  function finaleView() {
     if (!view.finale) return `<div class="loading adv-loading"><span class="spinner" aria-hidden="true"></span>Ielādējam…</div>`;
     return finaleHtml(view.finale, esc);
   }
 
-  // ----- page -----
-
-  function renderSavedPage() {
-    app.innerHTML = `
-      <div class="page page-advent">
-        ${lights()}
-        ${flakes()}
-        <div class="wrap adv-wrap">
-          <header class="topbar">
-            <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz galveno lapu">${icons.back()}</a>
-            <span class="brand">${icons.star(28)}<span>Tavas atmiņas</span></span>
-          </header>
-          ${santaBanner()}
-          <section class="hero adv-hero">
-            <span class="eyebrow">${esc(st.event_name)}</span>
-            <h1>Tavas <em>atmiņas</em></h1>
-            <p class="lede">Šīs atmiņas jau ir ieliktas adventes kalendārā. Kamēr to diena vēl nav atvērusies, vari tās labot vai izdzēst.</p>
-          </section>
-          <div class="adv-body">
-            ${savedListHtml()}
-            <div class="adv-saved-actions">
-              <a class="btn btn-gold btn-big" href="#/s/${esc(token)}/advent/atminas">${icons.plus()}Uzrakstīt vēl vienu atmiņu</a>
-              <a class="btn btn-outline" href="#/s/${esc(token)}/advent">${advIcons.calendar(18)}Uz adventes kalendāru</a>
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }
-
   function render() {
-    if (view.tab === 'saved') return renderSavedPage();
-    const tabs = [
-      ['calendar', 'Kalendārs'],
-      ['memories', 'Manas atmiņas'],
-      ...(st.finale ? [['finale', 'Fināls']] : []),
-    ];
-    app.innerHTML = `
-      <div class="page page-advent">
-        ${lights()}
-        ${flakes()}
-        <div class="wrap adv-wrap">
-          <header class="topbar">
-            <a class="icon-btn back" href="#/s/${esc(token)}" aria-label="Atpakaļ uz slepeno rūķīti">${icons.back()}</a>
-            <span class="brand">${icons.star(28)}<span>Adventes kalendārs</span></span>
-          </header>
-          ${santaBanner()}
-          <section class="hero adv-hero">
-            <span class="eyebrow">${esc(st.event_name)}</span>
-            <h1>Priecīgus Ziemassvētkus, <em>${esc(vocative(st.my_name))}!</em></h1>
-            <p class="lede">${intro()}</p>
-          </section>
-          <nav class="adv-tabs" aria-label="Sadaļas">
-            ${tabs
-              .map(
-                ([k, l]) =>
-                  `<button type="button" class="adv-tab ${view.tab === k ? 'active' : ''}" data-tab="${k}" ${
-                    view.tab === k ? 'aria-current="page"' : ''
-                  }>${l}</button>`,
-              )
-              .join('')}
-          </nav>
-          <div class="adv-body">
-            ${view.tab === 'calendar' ? calendarTab() : view.tab === 'memories' ? memoriesTab() : finaleTab()}
-          </div>
-        </div>
-        <div class="sheet-backdrop" hidden></div>
-        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h" hidden></div>
-      </div>`;
+    const titles = {
+      calendar: 'Adventes kalendārs',
+      rules: 'Kā spēlēt?',
+      memories: 'Izvēlies jautājumu',
+      write: 'Rakstīt atmiņu',
+      saved: 'Tavas atmiņas',
+      finale: 'Fināls',
+    };
+    const views = { calendar: calendarView, rules: rulesView, memories: memoriesView, write: writeView, saved: savedView, finale: finaleView };
+    app.innerHTML = shell(titles[view.tab] || titles.calendar, (views[view.tab] || calendarView)());
   }
 
   // ----- door sheet -----
@@ -607,26 +488,6 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       if (e.target.classList?.contains('sheet-backdrop')) closeSheet();
       return;
     }
-    if (t.dataset.tab) {
-      view.tab = t.dataset.tab;
-      render();
-      if (view.tab === 'memories' && !view.memories) {
-        view.memories = await api.adventMyMemories(token).catch(() => []);
-        if (alive && view.tab === 'memories') render();
-      }
-      if (view.tab === 'finale' && !view.finale) {
-        try {
-          view.finale = await api.adventFinale(token);
-          if (alive && view.tab === 'finale') {
-            render();
-            burstConfetti(ensureConfettiHost());
-          }
-        } catch (err) {
-          toast(err.message);
-        }
-      }
-      return;
-    }
     if (t.classList.contains('door')) {
       const day = Number(t.dataset.day);
       const d = st.days[day - 1];
@@ -644,22 +505,13 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
       return;
     }
     if (t.hasAttribute('data-close')) return closeSheet();
-    if (t.dataset.q) {
-      view.openQuestion = Number(t.dataset.q);
-      view.editingId = null;
-      render();
-      app.querySelector(`#mem-new-${view.openQuestion}`)?.focus();
-      return;
-    }
     if (t.hasAttribute('data-cancel')) {
-      view.openQuestion = null;
       view.editingId = null;
       render();
       return;
     }
     if (t.dataset.edit) {
       view.editingId = t.dataset.edit;
-      view.openQuestion = null;
       render();
       app.querySelector(`#mem-edit-${view.editingId}`)?.focus();
       return;
@@ -687,11 +539,11 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
         const id = form.dataset.editform || null;
         const qid = Number(form.dataset.qform || form.dataset.qid);
         view.memories = await api.adventSaveMemory(token, id, qid, ta.value);
-        view.openQuestion = null;
         view.editingId = null;
         toast(id ? 'Atmiņa saglabāta' : 'Paldies! Atmiņa saglabāta un ielikta kalendārā');
         if (!id) {
-          location.hash = `#/s/${token}/advent/saglabatas`;
+          // Replace the writing page in history, so "back" from the list goes to the questions, not to an empty form.
+          ui.navReplace(`#/s/${token}/advent/saglabatas`);
           return;
         }
         render();
@@ -756,6 +608,17 @@ export async function adventParticipantPage(token, ui, initialTab = 'calendar') 
   if (view.tab === 'memories' || view.tab === 'saved') {
     view.memories = await api.adventMyMemories(token).catch(() => []);
     if (alive) render();
+  }
+  if (view.tab === 'finale') {
+    try {
+      view.finale = await api.adventFinale(token);
+      if (alive) {
+        render();
+        burstConfetti(ensureConfettiHost());
+      }
+    } catch (err) {
+      toast(err.message);
+    }
   }
 }
 
@@ -1079,7 +942,7 @@ export async function adventOrganizerPage(adminToken, ui) {
         ${flakes()}
         <div class="wrap adv-wrap">
           <header class="topbar">
-            <a class="icon-btn back" href="#/o/${esc(adminToken)}" aria-label="Atpakaļ uz organizatora lapu">${icons.back()}</a>
+            <a class="icon-btn back" href="#/o/${esc(adminToken)}" data-back aria-label="Atpakaļ uz organizatora lapu">${icons.back()}</a>
             <span class="brand">${icons.star(28)}<span>Adventes kalendārs</span></span>
             <span class="role">Organizators</span>
           </header>

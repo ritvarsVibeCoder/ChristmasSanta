@@ -393,3 +393,69 @@ body.no-scroll { overflow: hidden; }
 
 .adv-fill-hint { margin: 0 4px; font-size: 15px; line-height: 1.5; color: var(--mint); }
 .adv-fill-hint strong { color: var(--gold-light); }
+
+/* ===== simplified pages: one thing per page ===== */
+.adv-wrap { max-width: 520px; }
+.adv-top { gap: 12px; justify-content: flex-start; }
+.adv-title { margin: 0; font-family: var(--serif); font-size: clamp(24px, 7vw, 30px); font-weight: 700; line-height: 1.15; }
+.page-advent .adv-body { margin-top: 18px; }
+
+/* small red "who you gift" box + points box */
+.adv-minirow { display: flex; gap: 10px; }
+.santa-strip, .points-box {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 6px; text-decoration: none;
+}
+.santa-strip { flex: 1; min-width: 0; background: var(--red); color: var(--cream); border: 2px solid var(--gold); }
+.santa-strip:hover { color: var(--cream); background: #d83246; }
+.santa-strip strong { font-family: var(--serif); font-size: 22px; line-height: 1.2; overflow-wrap: anywhere; }
+.santa-strip.pending strong { font-size: 17px; color: var(--gold-light); }
+.points-box { flex: none; width: 110px; background: var(--cream); color: var(--ink); }
+.points-box strong { font-family: var(--serif); font-size: 22px; color: var(--red-text); }
+.ss-k { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fde3e3; }
+.points-box .ss-k { color: var(--ink-2); }
+
+.page-advent .adv-cal { background: var(--pine-2); border-radius: 20px; padding: 12px; }
+
+.adv-notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: 14px;
+  background: var(--pine-2); border: 1.5px solid var(--pine-3); color: var(--cream); text-decoration: none; font-size: 15px; line-height: 1.4;
+}
+.adv-notice b { color: var(--gold-light); }
+.adv-notice span:last-child { font-size: 22px; color: var(--gold-light); }
+.adv-notice.gold { background: var(--gold); color: var(--ink); border-color: var(--gold-light); }
+.adv-notice.gold b, .adv-notice.gold span:last-child { color: var(--red-text); }
+.adv-notice:hover { color: var(--cream); filter: brightness(1.05); }
+.adv-notice.gold:hover { color: var(--ink); }
+
+.adv-more { align-self: center; min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; font-weight: 600; color: var(--gold-light); }
+
+/* how to play */
+.rules-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.rules-steps li { display: flex; gap: 14px; align-items: center; background: var(--pine-2); border-radius: 16px; padding: 16px; font-size: 17px; line-height: 1.4; }
+.rs-n { flex: none; width: 40px; height: 40px; border-radius: 999px; background: var(--gold); color: var(--ink); display: grid; place-items: center; font-family: var(--serif); font-size: 20px; font-weight: 700; }
+.rules-points { background: var(--cream); color: var(--ink); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.rules-points div { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; }
+.rules-points b { color: #2e7d4f; white-space: nowrap; }
+.rp-h { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #8a5a0b; }
+.rules-foot { margin: 0 4px; font-size: 14px; line-height: 1.5; color: var(--mint); }
+
+/* choose a question */
+.q-list { display: flex; flex-direction: column; gap: 10px; }
+.q-item {
+  min-height: 64px; border-radius: 16px; background: var(--pine-2); border: 1.5px solid var(--pine-3); color: var(--cream);
+  text-decoration: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px;
+  font-size: 17px; font-weight: 600; line-height: 1.35;
+}
+.q-item:hover { color: var(--cream); border-color: var(--gold); }
+.q-item span:last-child { font-size: 24px; color: var(--gold-light); }
+
+/* write a memory */
+.write-form { display: flex; flex-direction: column; gap: 16px; }
+.write-q { font-family: var(--serif); font-size: clamp(22px, 6.5vw, 28px); font-weight: 700; line-height: 1.25; }
+.write-form textarea {
+  min-height: 280px; border: 2px solid var(--gold); border-radius: 18px; background: var(--cream); color: var(--ink);
+  padding: 16px; font: 500 17px/1.5 var(--sans); resize: vertical;
+}
+.write-form textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(233, 185, 73, 0.45); }
+.write-form textarea::placeholder { color: #8a7f6e; }
+.write-hint { margin: 0; font-size: 15px; color: var(--mint); }

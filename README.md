@@ -18,7 +18,12 @@ Mobile-first, with desktop layouts. All screens are in Latvian ("Slepenais rūķ
 A family-memory guessing game for 1–24 December, in Latvian, reached from each person's existing
 Secret Santa link (`#/s/<token>/advent`) — no new links or accounts.
 
-- **Memories:** participants answer whichever questions they like ("Manas atmiņas"); they can edit or
+- **Pages (one thing per page):** main card page (name, budget, two buttons) → `…/advent` calendar,
+  `…/advent/noteikumi` how to play, `…/advent/atminas` question list, `…/advent/rakstit/<id>` write,
+  `…/advent/saglabatas` your memories, `…/advent/finals` finale. The gold back arrow retraces the
+  pages in the order you visited them; a page opened directly from a link goes back to its parent page.
+
+- **Memories:** participants answer whichever questions they like ("Rakstīt atmiņas"); they can edit or
   delete a memory until its day opens. Memories stay private until they appear in the calendar.
 - **Memories go straight in:** a saved memory is placed on a random empty day that hasn't opened yet,
   exactly as written (no review, no text correction). The author can edit or delete it until that day opens.
